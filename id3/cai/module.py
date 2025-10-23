@@ -655,41 +655,6 @@ class CAIModule:
 
 
 
-def create_cai_module(reference_species: str = 'ecoli_bl21de3',
-                      reference_sequences: Optional[List[str]] = None,
-                      device: torch.device = None) -> CAIModule:
-    """
-    Factory function to create CAI module.
-
-    Args:
-        reference_species: Reference species for CAI calculation
-        reference_sequences: Optional reference sequences
-        device: Computation device (CPU or CUDA)
-
-    Returns:
-        Configured CAI module instance
-    """
-    return CAIModule(reference_species=reference_species, 
-                     reference_sequences=reference_sequences, 
-                     device=device)
-
-
-def compute_sequence_cai(rna_sequence: str,
-                        reference_species: str = 'ecoli_bl21de3') -> float:
-    """
-    Convenience function to compute CAI score for a single sequence.
-
-    Args:
-        rna_sequence: RNA sequence string
-        reference_species: Reference species
-
-    Returns:
-        CAI score (0.0 - 1.0)
-    """
-    cai_module = CAIModule(reference_species=reference_species)
-    return cai_module.compute_cai_score(rna_sequence)
-
-
 if __name__ == "__main__":
     # Test CAI module
     print("🧪 Testing CAI module...")

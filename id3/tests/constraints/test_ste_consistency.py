@@ -25,8 +25,9 @@ def test_constraint_ste_consistency(
     beta: float,
     amino_acid_sequence: str = "MKAI"
 ) -> Tuple[bool, float]:
+    """Test STE consistency between probabilities and enhanced_sequence"""
 
-    
+    # Create constraint
 
     if constraint_type == "lagrangian":
         constraint = LagrangianConstraint(
@@ -51,19 +52,19 @@ def test_constraint_ste_consistency(
         )
     else:
         raise ValueError(f"Unknown constraint type: {constraint_type}")
-    
 
+    # Forward pass
     result = constraint.forward(alpha=0.0, beta=beta, tau=1.0)
-    
 
+    # Get both sequences
     rna_probs = result.get('probabilities')
     enhanced_sequence = result.get('enhanced_sequence')
-    
+
     if rna_probs is None or enhanced_sequence is None:
-
+        # Missing required outputs
         return False, float('inf')
-    
 
+    # Align dimensions
     if enhanced_sequence.dim() == 2 and rna_probs.dim() == 3:
         enhanced_with_batch = enhanced_sequence.unsqueeze(0)
     elif enhanced_sequence.dim() == 3 and rna_probs.dim() == 2:
@@ -71,17 +72,17 @@ def test_constraint_ste_consistency(
         enhanced_with_batch = enhanced_sequence
     else:
         enhanced_with_batch = enhanced_sequence
-    
 
+    # Compute L1 difference
     diff = torch.sum(torch.abs(rna_probs - enhanced_with_batch)).item()
-    
 
+    # Check consistency based on beta
     if beta == 1.0:
-
+        # STE mode: should be identical
         consistent = torch.allclose(rna_probs, enhanced_with_batch, atol=1e-5)
         expected_consistent = True
     else:
-
+        # Soft probability mode: may differ
         consistent = torch.allclose(rna_probs, enhanced_with_batch, atol=1e-5)
         expected_consistent = False
     
@@ -90,9 +91,9 @@ def test_constraint_ste_consistency(
     return test_pass, diff
 
 def run_all_tests():
-    """运行所有12个测试用例"""
-    
-    logger.info("🧪 测试所有约束类型的STE一致性")
+    """Run all 12 test cases"""
+
+    logger.info("🧪 Testing STE Consistency for All Constraint Types")
     logger.info("="*60)
     
     constraint_types = ["lagrangian", "ams", "cpc"]
@@ -107,21 +108,21 @@ def run_all_tests():
         for enable_cai in cai_settings:
             for beta in beta_settings:
                 total_tests += 1
-                
 
-                cai_str = "CAI启用" if enable_cai else "CAI未启用"
-                beta_str = "STE" if beta == 1.0 else "软概率"
+                # Test name
+                cai_str = "CAI-enabled" if enable_cai else "CAI-disabled"
+                beta_str = "STE" if beta == 1.0 else "soft-prob"
                 test_name = f"{constraint_type.upper()}-{cai_str}-{beta_str}"
-                
-                logger.info(f"\n测试 {total_tests}/12: {test_name}")
+
+                logger.info(f"\nTest {total_tests}/12: {test_name}")
                 
                 try:
-
+                    # Run test
                     test_pass, diff = test_constraint_ste_consistency(
                         constraint_type, enable_cai, beta
                     )
-                    
 
+                    # Store results
                     results.append({
                         'name': test_name,
                         'passed': test_pass,
@@ -130,15 +131,15 @@ def run_all_tests():
                         'cai': enable_cai,
                         'beta': beta
                     })
-                    
+
                     if test_pass:
                         passed_tests += 1
-                        logger.info(f"   ✅ 通过 (L1差异: {diff:.10f})")
+                        logger.info(f"   ✅ Passed (L1 diff: {diff:.10f})")
                     else:
-                        logger.error(f"   ❌ 失败 (L1差异: {diff:.10f})")
-                        
+                        logger.error(f"   ❌ Failed (L1 diff: {diff:.10f})")
+
                 except Exception as e:
-                    logger.error(f"   ❌ 测试出错: {str(e)}")
+                    logger.error(f"   ❌ Test error: {str(e)}")
                     results.append({
                         'name': test_name,
                         'passed': False,
@@ -147,28 +148,28 @@ def run_all_tests():
                         'cai': enable_cai,
                         'beta': beta
                     })
-    
 
+    # Summary
     logger.info("\n" + "="*60)
-    logger.info("📊 测试汇总")
+    logger.info("📊 Test Summary")
     logger.info("="*60)
-    
 
+    # Per-constraint summary
     for constraint_type in constraint_types:
         logger.info(f"\n{constraint_type.upper()}:")
         constraint_results = [r for r in results if r['constraint'] == constraint_type]
         for r in constraint_results:
             status = "✅" if r['passed'] else "❌"
-            logger.info(f"   {status} {r['name']}: L1差异={r['diff']:.10f}")
-    
+            logger.info(f"   {status} {r['name']}: L1 diff={r['diff']:.10f}")
 
+    # Overall summary
     logger.info("\n" + "="*60)
-    logger.info(f"🎯 总结: {passed_tests}/{total_tests} 测试通过")
-    
+    logger.info(f"🎯 Summary: {passed_tests}/{total_tests} tests passed")
+
     if passed_tests == total_tests:
-        logger.info("🎉 所有测试通过！STE一致性修复成功！")
+        logger.info("🎉 All tests passed! STE consistency fix successful!")
     else:
-        logger.error(f"⚠️ 有 {total_tests - passed_tests} 个测试失败")
+        logger.error(f"⚠️ {total_tests - passed_tests} tests failed")
     
     return passed_tests == total_tests
 

@@ -12,7 +12,7 @@ from id3.experiments.utils.data_loader import ProteinDataLoader
 def test_extended_optimization():
 
     print("="*60)
-
+    print("Extended Optimization Test (50 Iterations)")
     print("="*60)
     
     torch.manual_seed(42)
@@ -50,8 +50,8 @@ def test_extended_optimization():
             fallback_count += 1
         
         if i % 10 == 0:
+            print(f"Iteration {i}: loss={loss.item():.6f}, access={access:.4f}")
 
-            
         loss.backward()
         optimizer.step()
     
@@ -60,18 +60,19 @@ def test_extended_optimization():
 
 
 
-    
+
     if fallback_count < 40:
-
+        print(f"✅ Test PASSED: DeepRaccess working normally (fallback count: {fallback_count}/50)")
     elif fallback_count < 45:
-
+        print(f"⚠️ Test WARNING: Some fallback usage (fallback count: {fallback_count}/50)")
     else:
+        print(f"❌ Test FAILED: Too many fallbacks (fallback count: {fallback_count}/50)")
 
 
 def test_both_modes():
-    """测试连续和离散模式"""
+    """Test continuous and discrete modes"""
     print("\n" + "="*60)
-    print("双模式测试")
+    print("Dual Mode Test")
     print("="*60)
     
     torch.manual_seed(42)
@@ -88,22 +89,22 @@ def test_both_modes():
         device='cuda'
     )
     
-    print("测试连续模式 (beta=0):")
+    print("Testing continuous mode (beta=0):")
     result_cont = constraint.forward_with_loss(alpha=0.0, tau=1.0, beta=0.0)
     print(f"  Loss: {result_cont['loss_total'].item():.4f}")
     print(f"  Access: {result_cont['eval_access']:.4f}")
-    
-    print("\n测试离散模式 (beta=1):")
+
+    print("\nTesting discrete mode (beta=1):")
     result_disc = constraint.forward_with_loss(alpha=0.0, tau=1.0, beta=1.0)
     print(f"  Loss: {result_disc['loss_total'].item():.4f}")
     print(f"  Access: {result_disc['eval_access']:.4f}")
-    
-    print(f"\n✅ 两种模式都正常工作")
+
+    print(f"\n✅ Both modes working normally")
 
 def main():
     print("""
 ╔══════════════════════════════════════════════════════════╗
-
+║         Final Verification Test                         ║
 ╚══════════════════════════════════════════════════════════╝
     """)
     
@@ -111,7 +112,7 @@ def main():
     test_both_modes()
     
     print("\n" + "="*60)
-    print("🎉 所有测试通过！DeepRaccess问题已解决")
+    print("🎉 All tests passed! DeepRaccess issue resolved")
     print("="*60)
 
 if __name__ == '__main__':

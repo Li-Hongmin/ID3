@@ -2,6 +2,7 @@
 Experiment Configuration Module
 """
 
-from .experiment_config import ExperimentConfig
+# Only unified config is used
+# ExperimentConfig is legacy, not imported
 
-__all__ = ['ExperimentConfig']
+__all__ = []

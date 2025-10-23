@@ -32,8 +32,9 @@ def test_discrete_satisfaction(
     beta: float,
     amino_acid_sequence: str = "MKAI"
 ) -> Tuple[bool, str, str, Dict]:
+    """Test discrete sequence constraint satisfaction"""
 
-    
+    # Create constraint
 
     if constraint_type == "lagrangian":
         constraint = LagrangianConstraint(
@@ -58,18 +59,18 @@ def test_discrete_satisfaction(
         )
     else:
         raise ValueError(f"Unknown constraint type: {constraint_type}")
-    
 
+    # Forward pass
     result = constraint.forward(alpha=0.0, beta=beta, tau=1.0)
-    
 
+    # Get discrete sequence
     discrete_sequence_str = result.get('discrete_sequence', '')
-    
 
+    # Fallback: decode from enhanced_sequence if no discrete_sequence
     if not discrete_sequence_str and 'enhanced_sequence' in result:
         enhanced = result['enhanced_sequence']
         if enhanced is not None:
-
+            # Convert to nucleotide string
             if enhanced.dim() == 3:
                 indices = torch.argmax(enhanced[0], dim=-1)
             elif enhanced.dim() == 2:
@@ -79,24 +80,24 @@ def test_discrete_satisfaction(
             
             nucleotides = ['A', 'C', 'G', 'U']
             discrete_sequence_str = ''.join([nucleotides[idx.item()] for idx in indices.cpu()])
-    
 
+    # Convert to amino acids
     if discrete_sequence_str:
         codons = [discrete_sequence_str[i:i+3] for i in range(0, len(discrete_sequence_str), 3)]
         amino_acids = [CODON_TO_AMINO_ACID.get(codon, '?') for codon in codons if len(codon) == 3]
         generated_amino = ''.join(amino_acids)
     else:
         generated_amino = "NO_DISCRETE_SEQ"
-    
 
+    # Check constraint satisfaction
     constraint_satisfied = (generated_amino == amino_acid_sequence)
     
     return constraint_satisfied, generated_amino, amino_acid_sequence, result
 
 def run_discrete_tests():
-    """运行离散序列约束满足测试"""
-    
-    logger.info("🧪 测试离散化序列的约束满足情况")
+    """Run discrete sequence constraint satisfaction tests"""
+
+    logger.info("🧪 Testing Discrete Sequence Constraint Satisfaction")
     logger.info("="*60)
     
     constraint_types = ["lagrangian", "ams", "cpc"]
@@ -108,25 +109,25 @@ def run_discrete_tests():
     detailed_results = []
     
     for constraint_type in constraint_types:
-        logger.info(f"\n📊 {constraint_type.upper()} 约束的离散序列")
+        logger.info(f"\n📊 {constraint_type.upper()} Constraint Discrete Sequences")
         logger.info("-"*40)
         
         for enable_cai in cai_settings:
             for beta in beta_settings:
                 total_tests += 1
-                
 
-                cai_str = "CAI启用" if enable_cai else "CAI未启用"
-                beta_str = "STE" if beta == 1.0 else "软概率"
+                # Test name
+                cai_str = "CAI-enabled" if enable_cai else "CAI-disabled"
+                beta_str = "STE" if beta == 1.0 else "soft-prob"
                 test_name = f"{constraint_type}-{cai_str}-{beta_str}"
                 
                 try:
-
+                    # Run test
                     satisfied, generated, target, result = test_discrete_satisfaction(
                         constraint_type, enable_cai, beta
                     )
-                    
 
+                    # Store results
                     detailed_results.append({
                         'test': test_name,
                         'satisfied': satisfied,
@@ -135,34 +136,34 @@ def run_discrete_tests():
                         'has_discrete': 'discrete_sequence' in result,
                         'has_enhanced': 'enhanced_sequence' in result and result['enhanced_sequence'] is not None
                     })
-                    
+
                     if satisfied:
                         passed_tests += 1
-                        logger.info(f"   ✅ {test_name}: 离散序列 '{generated}' == '{target}'")
+                        logger.info(f"   ✅ {test_name}: Discrete sequence '{generated}' == '{target}'")
                     else:
-                        logger.error(f"   ❌ {test_name}: 离散序列 '{generated}' != '{target}'")
-                        
+                        logger.error(f"   ❌ {test_name}: Discrete sequence '{generated}' != '{target}'")
+
                 except Exception as e:
-                    logger.error(f"   ❌ {test_name}: 错误 - {str(e)}")
+                    logger.error(f"   ❌ {test_name}: Error - {str(e)}")
                     detailed_results.append({
                         'test': test_name,
                         'satisfied': False,
                         'error': str(e)
                     })
-    
 
+    # Summary
     logger.info("\n" + "="*60)
-    logger.info("📊 离散序列约束满足汇总")
+    logger.info("📊 Discrete Sequence Constraint Satisfaction Summary")
     logger.info("="*60)
-    
 
+    # Per-constraint summary
     for constraint_type in constraint_types:
         constraint_results = [r for r in detailed_results if constraint_type in r['test']]
         
         logger.info(f"\n{constraint_type.upper()}:")
         total = len(constraint_results)
         passed = sum(1 for r in constraint_results if r.get('satisfied', False))
-        logger.info(f"  通过率: {passed}/{total} ({100*passed/total:.0f}%)")
+        logger.info(f"  Pass rate: {passed}/{total} ({100*passed/total:.0f}%)")
         
         for r in constraint_results:
             if 'error' not in r:
@@ -173,21 +174,21 @@ def run_discrete_tests():
                     logger.info(f"       - has_enhanced_sequence: {r['has_enhanced']}")
     
     logger.info("\n" + "="*60)
-    logger.info(f"🎯 总结: {passed_tests}/{total_tests} ({100*passed_tests/total_tests:.1f}%) 离散序列满足约束")
-    
+    logger.info(f"🎯 Summary: {passed_tests}/{total_tests} ({100*passed_tests/total_tests:.1f}%) discrete sequences satisfy constraints")
 
-    logger.info("\n📌 CAI增强对离散序列的影响:")
-    cai_enabled = [r for r in detailed_results if 'CAI启用' in r['test'] and 'error' not in r]
-    cai_disabled = [r for r in detailed_results if 'CAI未启用' in r['test'] and 'error' not in r]
+    # CAI impact analysis
+    logger.info("\n📌 CAI Enhancement Impact on Discrete Sequences:")
+    cai_enabled = [r for r in detailed_results if 'CAI-enabled' in r['test'] and 'error' not in r]
+    cai_disabled = [r for r in detailed_results if 'CAI-disabled' in r['test'] and 'error' not in r]
     
     cai_enabled_pass = sum(1 for r in cai_enabled if r['satisfied'])
     cai_disabled_pass = sum(1 for r in cai_disabled if r['satisfied'])
-    
-    logger.info(f"  - CAI启用时: {cai_enabled_pass}/{len(cai_enabled)} 满足约束")
-    logger.info(f"  - CAI未启用时: {cai_disabled_pass}/{len(cai_disabled)} 满足约束")
-    
+
+    logger.info(f"  - CAI enabled: {cai_enabled_pass}/{len(cai_enabled)} satisfy constraints")
+    logger.info(f"  - CAI disabled: {cai_disabled_pass}/{len(cai_disabled)} satisfy constraints")
+
     if cai_enabled_pass > cai_disabled_pass:
-        logger.info("  → CAI增强显著提高了约束满足率")
+        logger.info("  → CAI enhancement significantly improves constraint satisfaction rate")
     
     return passed_tests == total_tests
 

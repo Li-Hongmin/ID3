@@ -25,7 +25,7 @@ def device():
 
 @pytest.fixture(scope='session')
 def cpu_device():
-    """强制使用CPU设备"""
+    """Force use of CPU device"""
     return torch.device('cpu')
 
 
@@ -39,7 +39,7 @@ def test_amino_sequence():
 
 @pytest.fixture
 def test_rna_sequence():
-    """对应的测试RNA序列"""
+    """Corresponding test RNA sequence"""
 
     return "AUGAGCAAGGGTGAAGAACTGTTCACCGGTGTTGTGCCGATCCTGGTTGAACTGGATGGTGATGTGAACGGTCACAAATTCAGCGTGAGCGGT"
 
@@ -52,7 +52,7 @@ def short_amino_sequence():
 
 @pytest.fixture
 def long_amino_sequence():
-    """长测试序列（溶菌酶片段）"""
+    """Long test sequence (lysozyme fragment)"""
     return "KVFERCELARTLKRLGMDGYRGISLANWMCLAKWESGYNTRATNYNAGDRSTDYGIFQIN"
 
 
@@ -71,18 +71,18 @@ def test_codon_probs(device):
 
 @pytest.fixture
 def test_valid_mask(test_amino_sequence):
-    """生成有效密码子掩码"""
+    """Generate valid codon mask"""
     from id3.utils.constants import amino_acids_to_codons
-    
+
     seq_len = len(test_amino_sequence)
     max_codons = 6
     valid_mask = torch.zeros(seq_len, max_codons, dtype=torch.bool)
-    
+
     for pos, aa in enumerate(test_amino_sequence):
         if aa in amino_acids_to_codons:
             num_codons = len(amino_acids_to_codons[aa])
             valid_mask[pos, :num_codons] = True
-    
+
     return valid_mask
 
 
@@ -103,7 +103,7 @@ def constraint_config():
 
 @pytest.fixture
 def cai_config():
-    """CAI相关配置"""
+    """CAI-related configuration"""
     return {
         'species': 'ecoli_bl21de3',
         'target_cai': 0.8,
@@ -133,15 +133,15 @@ def experiment_config():
 
 @pytest.fixture
 def mock_deepraccess():
-    """模拟的DeepRaccess模型（用于不需要真实模型的测试）"""
+    """Mock DeepRaccess model (for tests that don't need the real model)"""
     class MockDeepRaccess:
         def __init__(self, device):
             self.device = device
             self.model = self
-            
+
         def eval(self):
             return self
-            
+
         def compute_atg_window_accessibility(self, rna_sequence, atg_position=0, discrete=False):
 
             if isinstance(rna_sequence, torch.Tensor):
@@ -152,7 +152,7 @@ def mock_deepraccess():
                     return torch.rand(1, device=self.device).squeeze() * 10.0
             else:
                 return torch.tensor(5.0, device=self.device)
-    
+
     return MockDeepRaccess
 
 
@@ -166,7 +166,7 @@ def temp_dir(tmp_path):
 
 @pytest.fixture
 def results_dir(temp_dir):
-    """测试结果目录"""
+    """Test results directory"""
     results = temp_dir / "results"
     results.mkdir(exist_ok=True)
     return results
@@ -189,7 +189,7 @@ def performance_thresholds():
 
 @pytest.fixture
 def assert_tensor_close():
-    """提供张量近似相等的断言函数"""
+    """Provide assertion function for tensor approximate equality"""
     def _assert(actual, expected, rtol=1e-5, atol=1e-8, msg=""):
         """
 
@@ -216,16 +216,16 @@ def assert_cai_satisfied():
 
     def _assert(actual_cai, target_cai, tolerance=0.01):
         """
-        断言CAI约束满足
-        
+        Assert CAI constraint is satisfied
+
         Args:
-            actual_cai: 实际CAI值
-            target_cai: 目标CAI值
-            tolerance: 容差
+            actual_cai: Actual CAI value
+            target_cai: Target CAI value
+            tolerance: Tolerance
         """
         assert actual_cai >= target_cai - tolerance, \
             f"CAI constraint not satisfied: {actual_cai:.4f} < {target_cai - tolerance:.4f}"
-    
+
     return _assert
 
 
@@ -233,7 +233,7 @@ def assert_cai_satisfied():
 
 @pytest.fixture(autouse=True)
 def reset_random_seeds():
-    """每个测试前重置随机种子以确保可重复性"""
+    """Reset random seeds before each test to ensure reproducibility"""
     import random
     random.seed(42)
     np.random.seed(42)
@@ -254,7 +254,7 @@ def cleanup_gpu_memory():
 
 
 def pytest_configure(config):
-    """添加自定义标记"""
+    """Add custom markers"""
     config.addinivalue_line(
         "markers", "slow: marks tests as slow (deselect with '-m \"not slow\"')"
     )

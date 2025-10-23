@@ -197,7 +197,7 @@ Examples:
                        help='Use a preset configuration (full-12x12: without CAI, full-12x12-cai-penalty: CAI with constraint penalty, full-12x12-cai-no-penalty: CAI without constraint penalty, *-comparison: compare CAI modes, *-both: CAI vs no-CAI)')
     
     # Basic parameters
-    # 支持单数和复数形式
+    # Support both singular and plural forms
     parser.add_argument('--proteins', '--protein', type=str,
                        help='Protein(s), comma-separated for multiple')
     parser.add_argument('--constraints', '--constraint', type=str,
@@ -248,7 +248,7 @@ Examples:
                        help='Computation device (cuda/cpu)')
     parser.add_argument('--disable-inner-tqdm', action='store_true',
                        help='Disable inner tqdm progress bars to reduce log verbosity')
-    # 移除parallel参数，始终使用串行执行以获得最佳性能
+    # Removed parallel parameter, always use serial execution for best performance
     parser.add_argument('--verbose', action='store_true',
                        help='Show detailed progress')
     parser.add_argument('--mixed-precision', action='store_true',
@@ -291,7 +291,7 @@ def load_configuration(args: argparse.Namespace):
             config.seeds = args.seeds
         if args.base_seed is not None:
             config.base_seed = args.base_seed
-            # 如果只指定了seed而没有指定seeds，则设置seeds=1
+            # If only seed is specified without seeds, set seeds=1
             if args.seeds is None:
                 config.seeds = 1
         if args.enable_cai:
@@ -304,7 +304,7 @@ def load_configuration(args: argparse.Namespace):
             config.disable_constraint_penalty = True
         if args.device:
             config.device = args.device
-        # 移除parallel设置，始终串行执行
+        # Removed parallel setting, always use serial execution
         if args.verbose:
             config.verbose = True
         if args.mixed_precision:
@@ -362,8 +362,8 @@ def load_configuration(args: argparse.Namespace):
         return apply_arg_overrides(config, args)
 
 
-# 注意：save_individual_experiment 函数已移至 UnifiedExperimentRunner 类中
-# 作为 _save_experiment_result 方法进行增量保存
+# Note: save_individual_experiment function has been moved to UnifiedExperimentRunner class
+# as _save_experiment_result method for incremental saving
 
 
 def save_summary_results(config: UnifiedExperimentConfig, results: list, 
@@ -395,9 +395,9 @@ def save_summary_results(config: UnifiedExperimentConfig, results: list,
             'average_time_per_experiment': total_time / len(results) if results else 0
         },
         'configuration': config.to_dict(),
-        'experiment_files': [f.name if isinstance(f, Path) else f for f in experiment_files],  # 只保存文件名
+        'experiment_files': [f.name if isinstance(f, Path) else f for f in experiment_files],  # Only save file names
         'statistics': {},
-        'performance_table': {}  # 添加性能表格
+        'performance_table': {}  # Add performance table
     }
     
     # Add accessibility statistics
@@ -407,7 +407,7 @@ def save_summary_results(config: UnifiedExperimentConfig, results: list,
             'average': sum(accessibilities) / len(accessibilities),
             'best': min(accessibilities),
             'worst': max(accessibilities),
-            'std': 0.0  # 可以后续添加标准差计算
+            'std': 0.0  # Can add standard deviation calculation later
         }
         
         # Add CAI statistics if enabled
@@ -479,11 +479,11 @@ def save_results(config: UnifiedExperimentConfig, results: list, total_time: flo
         Path to saved summary file
     """
     output_dir = config.get_output_dir()
-    
-    # 收集已保存的实验文件（增量保存已完成）
+
+    # Collect saved experiment files (incremental saving already completed)
     experiment_files = list(output_dir.glob('*.json'))
-    # 排除config.json和summary.json
-    experiment_files = [f for f in experiment_files 
+    # Exclude config.json and summary.json
+    experiment_files = [f for f in experiment_files
                        if f.name not in ['config.json', 'summary.json']]
     
     # Save configuration file (skip if already exists from save_initial_config)
@@ -553,60 +553,60 @@ def print_summary(config: UnifiedExperimentConfig, results: list, total_time: fl
 
 def check_gpu_processes():
     """
-    检查GPU是否有其他Python进程在运行。
-    如果有，则报错退出，避免多个实验同时运行导致GPU内存溢出。
-    
+    Check if there are other Python processes running on the GPU.
+    If there are, exit with error to avoid GPU memory overflow from multiple experiments.
+
     Returns:
         bool: True if GPU is available, False if occupied
     """
     try:
-        # 检查nvidia-smi是否可用
+        # Check if nvidia-smi is available
         result = subprocess.run(
             ['nvidia-smi', '--query-compute-apps=pid,name', '--format=csv,noheader'],
             capture_output=True, text=True, timeout=5
         )
-        
+
         if result.returncode != 0:
-            logger.warning("⚠️  无法检查GPU状态，nvidia-smi命令失败")
-            return True  # 如果无法检查，继续运行
-        
-        # 解析输出，查找Python进程
+            logger.warning("⚠️  Unable to check GPU status, nvidia-smi command failed")
+            return True  # If cannot check, continue running
+
+        # Parse output to find Python processes
         lines = result.stdout.strip().split('\n')
         python_processes = []
         current_pid = os.getpid()
-        
+
         for line in lines:
             if line.strip():
                 parts = line.strip().split(',')
                 if len(parts) >= 2:
                     pid = int(parts[0].strip())
                     process_name = parts[1].strip()
-                    
-                    # 排除当前进程
+
+                    # Exclude current process
                     if pid != current_pid and 'python' in process_name.lower():
                         python_processes.append((pid, process_name))
-        
+
         if python_processes:
-            logger.error("❌ 检测到GPU上有其他Python进程正在运行！")
-            logger.error("   为避免GPU内存溢出，请先停止其他实验。")
-            logger.error("   检测到的进程：")
+            logger.error("❌ Detected other Python processes running on GPU!")
+            logger.error("   To avoid GPU memory overflow, please stop other experiments first.")
+            logger.error("   Detected processes:")
             for pid, name in python_processes:
                 logger.error(f"     - PID {pid}: {name}")
-            logger.error("\n   可以使用以下命令停止这些进程：")
+            logger.error("\n   You can stop these processes with the following command:")
             logger.error(f"     kill {' '.join(str(p[0]) for p in python_processes)}")
             return False
-        
-        logger.info("✅ GPU可用，没有其他Python进程占用")
+
+        logger.info("✅ GPU available, no other Python processes occupying it")
         return True
-        
+
     except subprocess.TimeoutExpired:
-        logger.warning("⚠️  nvidia-smi命令超时，跳过GPU检查")
+        logger.warning("⚠️  nvidia-smi command timed out, skipping GPU check")
         return True
     except FileNotFoundError:
-        logger.warning("⚠️  未找到nvidia-smi，可能没有安装NVIDIA驱动，跳过GPU检查")
+        logger.warning("⚠️  nvidia-smi not found, NVIDIA drivers may not be installed, skipping GPU check")
         return True
     except Exception as e:
-        logger.warning(f"⚠️  检查GPU状态时出错: {e}，跳过检查")
+        logger.warning(f"⚠️  Error checking GPU status: {e}, skipping check")
         return True
 
 
@@ -623,11 +623,11 @@ def main():
     """
     # Parse arguments
     args = parse_arguments()
-    
-    # 添加 --force 参数跳过GPU检查
+
+    # Add --force parameter to skip GPU check
     if not getattr(args, 'force', False):
         if not check_gpu_processes():
-            logger.error("\n💡 提示：如果确实要强制运行，可以使用 --force 参数跳过GPU检查")
+            logger.error("\n💡 Tip: If you really want to force run, use --force parameter to skip GPU check")
             sys.exit(1)
     
     # Load configuration
@@ -655,8 +655,8 @@ def main():
                 # Generate and run experiments for this config
                 experiments = config.generate_experiments()
                 logger.info(f"🎯 Running {len(experiments)} experiments...")
-                
-                # 确保配置中包含输出目录路径
+
+                # Ensure configuration includes output directory path
                 runner_config = config.to_dict()
                 runner_config['output_dir'] = str(config.get_output_dir())
                 runner = UnifiedExperimentRunner(runner_config)
@@ -695,9 +695,9 @@ def main():
             # Generate experiments
             experiments = config.generate_experiments()
             logger.info(f"🎯 Running {len(experiments)} experiments...")
-            
+
             # Create runner and execute experiments
-            # 确保配置中包含输出目录路径
+            # Ensure configuration includes output directory path
             runner_config = config.to_dict()
             runner_config['output_dir'] = str(config.get_output_dir())
             runner = UnifiedExperimentRunner(runner_config)

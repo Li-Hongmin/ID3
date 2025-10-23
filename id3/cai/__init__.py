@@ -33,12 +33,7 @@ CAI_INTEGRATION_AVAILABLE = True
 
 __all__ = [
     'CAIModule',
-    'rna_to_codon_probabilities', 
+    'rna_to_codon_probabilities',
     'compute_cai_from_sequence',
     'UnifiedCAIEnhancer'
 ]
-
-
-def check_cai_integration():
-    """Check if CAI integration is available and functional."""
-    return CAI_INTEGRATION_AVAILABLE

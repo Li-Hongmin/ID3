@@ -129,8 +129,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Step 2: Generating visualization..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-# Generate paper-quality 3-panel figure
-python visualize.py --json "$OUTPUT_DIR/optimization_result.json" --output "$OUTPUT_DIR/${PROTEIN_NAME}_${CONSTRAINT}_figure.png"
+# Generate paper-quality 3-panel evolution figure
+python evolution_figure.py --json "$OUTPUT_DIR/optimization_result.json" --output "$OUTPUT_DIR/${PROTEIN_NAME}_${CONSTRAINT}_figure.png"
 
 # Move any remaining figures to output directory
 mv *.png *.pdf "$OUTPUT_DIR/" 2>/dev/null || true

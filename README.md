@@ -151,9 +151,9 @@ Outputs:
 
 ### Help
 ```bash
-python demo.py --help                      # Demo options
-python run_unified_experiment.py --help    # Experiment options
-python visualize.py --help                 # Visualization options
+python demo.py --help                      # Interactive demo options
+python run_unified_experiment.py --help    # Batch experiment options
+python evolution_figure.py --help          # Visualization options
 ```
 
 ## Repository Structure

@@ -200,7 +200,10 @@ def run_accessibility_optimization(args):
         'total_loss': [],
         'accessibility': [],
         'cai': [],
-        'constraint_penalty': []
+        'constraint_penalty': [],
+        'iterations': [],
+        'rna_sequences': [],  # For nucleotide evolution plots
+        'discrete_sequences': []  # For AU content analysis
     }
 
     pbar = tqdm(range(args.iterations), desc="Optimizing", ncols=100)
@@ -249,6 +252,14 @@ def run_accessibility_optimization(args):
         history['constraint_penalty'].append(constraint_loss.item() if isinstance(constraint_loss, torch.Tensor) else 0.0)
         if isinstance(cai_value, float):
             history['cai'].append(cai_value)
+
+        # Track trajectory data for visualization
+        history['iterations'].append(iteration)
+        # Save rna_probs as numpy list for nucleotide evolution heatmaps
+        rna_probs_np = rna_probs.squeeze(0).detach().cpu().numpy().tolist()
+        history['rna_sequences'].append(rna_probs_np)
+        # Save discrete sequence for AU content analysis
+        history['discrete_sequences'].append(discrete_seq)
 
         # Update progress bar
         pbar.set_postfix({
@@ -359,7 +370,9 @@ def run_accessibility_optimization(args):
                 'unified_loss': history['total_loss'],
                 'discrete_cai_values': history['cai'],
                 'ecai_values': history['cai'],
-                'loss_values': history['total_loss']
+                'loss_values': history['total_loss'],
+                'rna_sequences': history['rna_sequences'],
+                'discrete_sequences': history['discrete_sequences']
             },
             'timestamp': datetime.now().isoformat()
         }

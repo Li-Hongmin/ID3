@@ -14,18 +14,40 @@ echo "╚═══════════════════════�
 echo ""
 
 # Configuration
-PROTEIN="${1:-MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG}"
+PROTEIN_ARG="${1:-MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG}"
 CONSTRAINT="${2:-lagrangian}"
 ITERATIONS="${3:-100}"
 OUTPUT_DIR="case_study_results"
 
 mkdir -p "$OUTPUT_DIR"
 
-echo "Configuration:"
-echo "  Protein: $PROTEIN"
-echo "  Constraint: $CONSTRAINT"
-echo "  Iterations: $ITERATIONS"
-echo "  Output: $OUTPUT_DIR/"
+# Check if protein is a file or sequence
+if [ -f "$PROTEIN_ARG" ]; then
+    PROTEIN_FILE="$PROTEIN_ARG"
+    PROTEIN_NAME=$(basename "$PROTEIN_FILE" .fasta.txt)
+    echo "Configuration:"
+    echo "  Protein file: $PROTEIN_FILE"
+    echo "  Constraint: $CONSTRAINT"
+    echo "  Iterations: $ITERATIONS"
+    echo "  Output: $OUTPUT_DIR/"
+elif [ -f "data/proteins/$PROTEIN_ARG.fasta.txt" ]; then
+    PROTEIN_FILE="data/proteins/$PROTEIN_ARG.fasta.txt"
+    PROTEIN_NAME="$PROTEIN_ARG"
+    echo "Configuration:"
+    echo "  Protein: $PROTEIN_NAME (from data/proteins/)"
+    echo "  Constraint: $CONSTRAINT"
+    echo "  Iterations: $ITERATIONS"
+    echo "  Output: $OUTPUT_DIR/"
+else
+    PROTEIN_FILE=""
+    PROTEIN_NAME="custom"
+    echo "Configuration:"
+    echo "  Protein sequence: $PROTEIN_ARG"
+    echo "  Constraint: $CONSTRAINT"
+    echo "  Iterations: $ITERATIONS"
+    echo "  Output: $OUTPUT_DIR/"
+fi
+
 echo ""
 
 # Step 1: Run optimization
@@ -33,12 +55,21 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Step 1: Running ID3 optimization..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-python demo.py \
-    --protein "$PROTEIN" \
-    --constraint "$CONSTRAINT" \
-    --iterations "$ITERATIONS" \
-    --output "$OUTPUT_DIR/optimized_sequence.fasta" \
-    --save-result "$OUTPUT_DIR/optimization_result.json"
+if [ -n "$PROTEIN_FILE" ]; then
+    python demo.py \
+        --protein-file "$PROTEIN_FILE" \
+        --constraint "$CONSTRAINT" \
+        --iterations "$ITERATIONS" \
+        --output "$OUTPUT_DIR/optimized_sequence.fasta" \
+        --save-result "$OUTPUT_DIR/optimization_result.json"
+else
+    python demo.py \
+        --protein "$PROTEIN_ARG" \
+        --constraint "$CONSTRAINT" \
+        --iterations "$ITERATIONS" \
+        --output "$OUTPUT_DIR/optimized_sequence.fasta" \
+        --save-result "$OUTPUT_DIR/optimization_result.json"
+fi
 
 echo ""
 
@@ -47,10 +78,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "Step 2: Generating visualization..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-python visualize_results.py "$OUTPUT_DIR/optimization_result.json"
+# Generate paper-quality 3-panel figure
+python visualize_case_study.py --json "$OUTPUT_DIR/optimization_result.json" --output "$OUTPUT_DIR/${PROTEIN_NAME}_${CONSTRAINT}_figure.png"
 
-# Move generated figures to output directory
-mv *.png "$OUTPUT_DIR/" 2>/dev/null || true
+# Move any remaining figures to output directory
+mv *.png *.pdf "$OUTPUT_DIR/" 2>/dev/null || true
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════════╗"

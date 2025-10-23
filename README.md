@@ -153,7 +153,7 @@ Outputs:
 ```bash
 python demo.py --help                      # Demo options
 python run_unified_experiment.py --help    # Experiment options
-python visualize_results.py --help         # Visualization options
+python visualize.py --help                 # Visualization options
 ```
 
 ## Repository Structure

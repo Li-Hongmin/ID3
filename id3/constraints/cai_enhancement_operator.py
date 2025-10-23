@@ -17,8 +17,7 @@ from typing import Dict, Tuple, Optional, Any
 from pathlib import Path
 
 
-from id3.optimizers.cai import BinarySearchCAIOptimizer, SADOOptimizer
-from id3.optimizers.cai.hybrid_bs_sado import HybridBSSADOOptimizer
+from id3.optimizers.cai import BinarySearchCAIOptimizer
 
 logger = logging.getLogger(__name__)
 
@@ -41,14 +40,12 @@ class CAIEnhancementOperator:
         operator = CAIEnhancementOperator(method='binary_search')
         
 
-        operator = CAIEnhancementOperator(method='sado')
+        operator = CAIEnhancementOperator(method='binary_search')
     """
     
 
     OPTIMIZERS = {
         'binary_search': BinarySearchCAIOptimizer,
-        'sado': SADOOptimizer,
-        'hybrid_bs_sado': HybridBSSADOOptimizer,
         'incremental': None,
     }
     
@@ -155,31 +152,13 @@ class CAIEnhancementOperator:
             Tuple of (discrete distribution, metadata dictionary)
         """
 
-        if self.method == 'sado':
-
-            discrete_distribution, metadata = self.optimizer.optimize(
-                pi_accessibility=pi_accessibility,
-                target_cai=target_cai,
-                amino_acid_sequence=amino_acid_sequence,
-                **kwargs
-            )
-        elif self.method in ['binary_search', 'hybrid_bs_sado']:
-
-            discrete_distribution, metadata = self.optimizer.optimize(
-                pi_accessibility=pi_accessibility,
-                target_cai=target_cai,
-                amino_acid_sequence=amino_acid_sequence,
-                valid_codon_mask=valid_codon_mask,
-                **kwargs
-            )
-        else:
-
-            discrete_distribution, metadata = self.optimizer.optimize(
-                pi_accessibility=pi_accessibility,
-                target_cai=target_cai,
-                amino_acid_sequence=amino_acid_sequence,
-                valid_codon_mask=valid_codon_mask,
-                **kwargs
+        # All optimizers use the same interface
+        discrete_distribution, metadata = self.optimizer.optimize(
+            pi_accessibility=pi_accessibility,
+            target_cai=target_cai,
+            amino_acid_sequence=amino_acid_sequence,
+            valid_codon_mask=valid_codon_mask,
+            **kwargs
             )
         
 
@@ -216,7 +195,7 @@ class CAIEnhancementOperator:
         """
         Reset optimizer state
 
-        Some optimizers (such as SADO) maintain internal state that needs to be reset
+        Some optimizers maintain internal state that needs to be reset
         when starting a new optimization sequence.
         """
         if hasattr(self.optimizer, 'reset'):
@@ -241,7 +220,7 @@ class CAIEnhancementOperator:
             stats.update(optimizer_stats)
         
 
-        if self.method == 'sado' and hasattr(self.optimizer, 'get_diversity_stats'):
+        if hasattr(self.optimizer, 'get_diversity_stats'):
             diversity_stats = self.optimizer.get_diversity_stats()
             stats['diversity'] = diversity_stats
         

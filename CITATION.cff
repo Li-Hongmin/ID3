@@ -1,0 +1,57 @@
+cff-version: 1.2.0
+title: ID3 Framework for mRNA Sequence Design
+message: "If you use this software, please cite it as below."
+type: software
+license: CC-BY-NC-SA-4.0
+license-url: https://creativecommons.org/licenses/by-nc-sa/4.0/
+authors:
+  - family-names: Li
+    given-names: Hongmin
+    email: lihongmin@edu.k.u-tokyo.ac.jp
+    affiliation: University of Tokyo
+  - family-names: Terai
+    given-names: Goro
+    affiliation: University of Tokyo
+  - family-names: Otagaki
+    given-names: Takumi
+    affiliation: University of Tokyo
+  - family-names: Asai
+    given-names: Kiyoshi
+    affiliation: University of Tokyo
+repository-code: https://github.com/username/id3-framework
+url: https://github.com/username/id3-framework
+abstract: >-
+  ID3 is a gradient-based optimization framework for mRNA sequence design
+  that integrates DeepRaccess accessibility prediction with biological
+  constraints. The framework implements 12 optimization variants combining
+  three constraint mechanisms (Codon Profile Constraint, Amino Matching
+  Softmax, and Lagrangian Multiplier) with four optimization modes
+  (deterministic/stochastic with soft/hard constraints). It supports
+  Codon Adaptation Index (CAI) optimization for translation efficiency
+  and GPU acceleration for high-performance computing.
+keywords:
+  - mRNA design
+  - gradient optimization
+  - codon optimization
+  - DeepRaccess
+  - RNA accessibility
+  - CAI
+  - bioinformatics
+  - sequence design
+  - machine learning
+version: 1.0.0
+date-released: 2025-01-15
+preferred-citation:
+  type: article
+  title: "Gradient-based Optimization for mRNA Sequence Design with ID3 Framework"
+  authors:
+    - family-names: Li
+      given-names: Hongmin
+    - family-names: Terai
+      given-names: Goro
+    - family-names: Otagaki
+      given-names: Takumi
+    - family-names: Asai
+      given-names: Kiyoshi
+  year: 2025
+  status: in-preparation

@@ -1,0 +1,3 @@
+"""
+Analysis configuration module.
+"""

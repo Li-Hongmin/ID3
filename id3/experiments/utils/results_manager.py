@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Results Management Module
+结果管理模块
 
-Responsible for saving, loading, and analyzing experiment results
+负责保存、加载和分析实验结果
 """
 
 import json
@@ -14,27 +14,27 @@ import numpy as np
 
 
 class ResultsManager:
-    """Experiment results manager"""
-
+    """实验结果管理器"""
+    
     def __init__(self, base_dir: str = "experiments/results"):
         """
-        Initialize results manager
-
+        初始化结果管理器
+        
         Args:
-            base_dir: Base directory for saving results
+            base_dir: 结果保存基础目录
         """
         self.base_dir = Path(base_dir)
         self.base_dir.mkdir(parents=True, exist_ok=True)
     
     def create_experiment_dir(self, experiment_name: str) -> Path:
         """
-        Create experiment directory
-
+        创建实验目录
+        
         Args:
-            experiment_name: Experiment name
-
+            experiment_name: 实验名称
+            
         Returns:
-            Experiment directory path
+            实验目录路径
         """
         exp_dir = self.base_dir / experiment_name
         exp_dir.mkdir(parents=True, exist_ok=True)
@@ -48,21 +48,21 @@ class ResultsManager:
         suffix: Optional[str] = None
     ) -> Path:
         """
-        Save experiment results
-
+        保存实验结果
+        
         Args:
-            results: Result data
-            experiment_name: Experiment name
-            protein_id: Protein ID
-            suffix: Filename suffix
-
+            results: 结果数据
+            experiment_name: 实验名称
+            protein_id: 蛋白质ID
+            suffix: 文件名后缀
+            
         Returns:
-            Path to saved file
+            保存的文件路径
         """
-        # Create experiment directory
+        # 创建实验目录
         exp_dir = self.create_experiment_dir(experiment_name)
-
-        # Build filename
+        
+        # 构建文件名
         timestamp = time.strftime("%Y%m%d_%H%M%S")
         if suffix:
             filename = f"{protein_id}_{suffix}_{timestamp}.json"
@@ -70,39 +70,39 @@ class ResultsManager:
             filename = f"{protein_id}_{timestamp}.json"
         
         filepath = exp_dir / filename
-
-        # Convert data types
+        
+        # 转换数据类型
         results_json = self._prepare_for_json(results)
-
-        # Save
+        
+        # 保存
         with open(filepath, 'w') as f:
             json.dump(results_json, f, indent=2)
-
-        print(f"Results saved: {filepath}")
+        
+        print(f"结果已保存: {filepath}")
         return filepath
-
+    
     def load_results(self, filepath: str) -> Dict[str, Any]:
         """
-        Load experiment results
-
+        加载实验结果
+        
         Args:
-            filepath: Result file path
-
+            filepath: 结果文件路径
+            
         Returns:
-            Result data
+            结果数据
         """
         with open(filepath, 'r') as f:
             return json.load(f)
     
     def _prepare_for_json(self, obj: Any) -> Any:
         """
-        Prepare data for JSON serialization
-
+        准备数据用于JSON序列化
+        
         Args:
-            obj: Object to serialize
-
+            obj: 要序列化的对象
+            
         Returns:
-            Serializable object
+            可序列化的对象
         """
         if isinstance(obj, dict):
             return {k: self._prepare_for_json(v) for k, v in obj.items()}
@@ -123,18 +123,18 @@ class ResultsManager:
         result2: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Compare two experiment results
-
+        比较两个实验结果
+        
         Args:
-            result1: First result
-            result2: Second result
-
+            result1: 第一个结果
+            result2: 第二个结果
+            
         Returns:
-            Comparison result
+            比较结果
         """
         comparison = {}
-
-        # Compare key metrics
+        
+        # 比较关键指标
         metrics = [
             'initial_accessibility',
             'final_accessibility',

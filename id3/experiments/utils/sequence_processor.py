@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Sequence Processing Utility Module
+序列处理工具模块
 
-Handles sequence conversion, encoding, and processing
+负责序列的转换、编码和处理
 """
 
 import torch
@@ -10,16 +10,16 @@ from typing import List, Tuple, Optional
 
 
 class SequenceProcessor:
-    """Sequence processor"""
+    """序列处理器"""
 
     NUCLEOTIDES = ['A', 'C', 'G', 'U']
 
     def __init__(self, device: Optional[torch.device] = None):
         """
-        Initialize processor
+        初始化处理器
 
         Args:
-            device: Computation device
+            device: 计算设备
         """
         if device is None:
             self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -28,13 +28,13 @@ class SequenceProcessor:
 
     def sequence_to_probs(self, sequence: str) -> torch.Tensor:
         """
-        Convert nucleotide sequence to probability tensor
+        将核苷酸序列转换为概率张量
 
         Args:
-            sequence: Nucleotide sequence string
+            sequence: 核苷酸序列字符串
 
         Returns:
-            Probability tensor [L, 4]
+            概率张量 [L, 4]
         """
         probs = []
         for nt in sequence.upper().replace('T', 'U'):
@@ -42,22 +42,22 @@ class SequenceProcessor:
             if nt in self.NUCLEOTIDES:
                 prob[self.NUCLEOTIDES.index(nt)] = 1.0
             else:
-                # Unknown nucleotides use uniform distribution
+                # 未知核苷酸使用均匀分布
                 prob[:] = 0.25
             probs.append(prob)
         return torch.stack(probs)
 
     def probs_to_sequence(self, probs: torch.Tensor) -> str:
         """
-        Convert probability tensor to nucleotide sequence
+        将概率张量转换为核苷酸序列
 
         Args:
-            probs: Probability tensor [L, 4]
+            probs: 概率张量 [L, 4]
 
         Returns:
-            Nucleotide sequence string
+            核苷酸序列字符串
         """
-        # Get nucleotide with maximum probability
+        # 获取最大概率的核苷酸
         indices = probs.argmax(dim=-1)
         sequence = ''.join([self.NUCLEOTIDES[idx] for idx in indices.cpu().numpy()])
         return sequence
@@ -68,11 +68,11 @@ class SequenceProcessor:
         utr3: str
     ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
-        Prepare UTR probability tensors
+        准备UTR概率张量
 
         Args:
-            utr5: 5'UTR sequence
-            utr3: 3'UTR sequence
+            utr5: 5'UTR序列
+            utr3: 3'UTR序列
 
         Returns:
             (utr5_probs, utr3_probs)
@@ -88,15 +88,15 @@ class SequenceProcessor:
         utr3_probs: torch.Tensor
     ) -> torch.Tensor:
         """
-        Concatenate complete mRNA probabilities
+        拼接完整mRNA概率
 
         Args:
-            utr5_probs: 5'UTR probabilities [L5, 4]
-            cds_probs: CDS probabilities [L_cds, 4]
-            utr3_probs: 3'UTR probabilities [L3, 4]
+            utr5_probs: 5'UTR概率 [L5, 4]
+            cds_probs: CDS概率 [L_cds, 4]
+            utr3_probs: 3'UTR概率 [L3, 4]
 
         Returns:
-            Complete mRNA probabilities [1, L_total, 4]
+            完整mRNA概率 [1, L_total, 4]
         """
         full_probs = torch.cat([utr5_probs, cds_probs, utr3_probs], dim=0)
-        return full_probs.unsqueeze(0)  # Add batch dimension
+        return full_probs.unsqueeze(0)  # 添加批次维度

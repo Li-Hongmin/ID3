@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Optimization Tracker Module
+优化跟踪器模块
 
-Handles recording and managing metrics during optimization process
+负责记录和管理优化过程中的指标
 """
 
 import time
@@ -11,104 +11,104 @@ from collections import defaultdict
 
 
 class OptimizationTracker:
-    """Optimization process tracker"""
-
+    """优化过程跟踪器"""
+    
     def __init__(
-        self,
+        self, 
         record_interval: int = 10,
         verbose_interval: int = 100
     ):
         """
-        Initialize tracker
-
+        初始化跟踪器
+        
         Args:
-            record_interval: Data recording interval
-            verbose_interval: Print output interval
+            record_interval: 数据记录间隔
+            verbose_interval: 打印输出间隔
         """
         self.record_interval = record_interval
         self.verbose_interval = verbose_interval
         self.data = defaultdict(list)
         self.start_time = None
         self.iteration_count = 0
-
+    
     def start(self):
-        """Start tracking"""
+        """开始跟踪"""
         self.start_time = time.time()
         self.data.clear()
         self.iteration_count = 0
-
+    
     def record(self, iteration: int, **metrics):
         """
-        Record data for one iteration
-
+        记录一次迭代的数据
+        
         Args:
-            iteration: Iteration number
-            **metrics: Arbitrary metric key-value pairs
+            iteration: 迭代次数
+            **metrics: 任意指标键值对
         """
         self.iteration_count = iteration
-
+        
         if iteration % self.record_interval == 0:
             self.data['iterations'].append(iteration)
             self.data['timestamps'].append(time.time() - self.start_time)
-
+            
             for key, value in metrics.items():
                 if value is not None:
-                    # Handle tensor types
+                    # 处理tensor类型
                     if hasattr(value, 'item'):
                         value = value.item()
                     self.data[key].append(value)
-
+    
     def print_progress(self, iteration: int, **metrics):
         """
-        Print progress information
-
+        打印进度信息
+        
         Args:
-            iteration: Iteration number
-            **metrics: Metrics to print
+            iteration: 迭代次数
+            **metrics: 要打印的指标
         """
         if iteration % self.verbose_interval == 0:
-            # Build message
+            # 构建消息
             parts = [f"Iter {iteration:4d}"]
-
+            
             for key, value in metrics.items():
                 if value is not None:
-                    # Handle different value types
+                    # 处理不同类型的值
                     if hasattr(value, 'item'):
                         value = value.item()
-
+                    
                     if isinstance(value, float):
                         parts.append(f"{key}={value:.4f}")
                     elif isinstance(value, bool):
                         parts.append(f"{key}={value}")
                     else:
                         parts.append(f"{key}={value}")
-
+            
             print(" | ".join(parts))
-
+    
     def get_results(self) -> Dict[str, List]:
-        """Get tracking results"""
+        """获取跟踪结果"""
         return dict(self.data)
-
+    
     def get_summary(self) -> Dict[str, Any]:
-        """Get summary statistics"""
+        """获取摘要统计"""
         elapsed_time = time.time() - self.start_time if self.start_time else 0
-
+        
         summary = {
             'total_iterations': self.iteration_count,
             'elapsed_time': elapsed_time,
             'iterations_per_second': self.iteration_count / elapsed_time if elapsed_time > 0 else 0
         }
-
-        # Add final values for each metric
+        
+        # 添加各指标的最终值
         for key, values in self.data.items():
             if key not in ['iterations', 'timestamps'] and values:
                 summary[f'final_{key}'] = values[-1]
                 summary[f'initial_{key}'] = values[0]
-
-                # For numeric types, calculate improvement
+                
+                # 对于数值类型，计算改善
                 if isinstance(values[0], (int, float)):
                     summary[f'{key}_improvement'] = values[0] - values[-1]
-
+        
         return summary
 
 

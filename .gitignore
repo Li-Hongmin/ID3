@@ -49,11 +49,13 @@ checkpoints/
 # Data and results
 results/
 outputs/
-experiments/
 logs/
 *.log
+
+# JSON files (except data/)
 *.json
 !data/**/*.json
+!id3/experiments/**/*.json
 
 # DeepRaccess (external dependency)
 DeepRaccess/

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-UTR模板加载器
+UTR template loader
 
-统一管理UTR序列模板，从data/utr_templates/目录读取
-支持缓存和单例模式，提供灵活的UTR序列管理接口
+Unified management of UTR sequence templates, loaded from data/utr_templates/ directory
+Supports caching and singleton pattern, providing flexible UTR sequence management interface
 """
 
 import os
@@ -13,19 +13,19 @@ import threading
 
 
 class UTRLoader:
-    """统一的UTR模板加载器
-    
-    使用单例模式确保全局只有一个实例
-    支持从文件加载UTR模板，并提供缓存机制
+    """Unified UTR template loader
+
+    Uses singleton pattern to ensure only one global instance
+    Supports loading UTR templates from files with caching mechanism
     """
     
     _instance = None
     _lock = threading.Lock()
     
     def __init__(self):
-        """初始化UTR加载器"""
+        """Initialize UTR loader"""
         if UTRLoader._instance is not None:
-            raise RuntimeError("UTRLoader是单例类，请使用get_instance()方法获取实例")
+            raise RuntimeError("UTRLoader is a singleton class, please use get_instance() method to get instance")
         
         self._cache = {}
         self._loaded = False
@@ -33,7 +33,7 @@ class UTRLoader:
     
     @classmethod
     def get_instance(cls) -> 'UTRLoader':
-        """获取UTRLoader单例实例"""
+        """Get UTRLoader singleton instance"""
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -41,30 +41,30 @@ class UTRLoader:
         return cls._instance
     
     def _find_project_root(self) -> Path:
-        """查找项目根目录"""
+        """Find project root directory"""
         current_dir = Path(__file__).resolve().parent
-        
-        # 向上查找直到找到包含data/utr_templates的目录
+
+        # Search upward until finding directory containing data/utr_templates
         while current_dir.parent != current_dir:
             utr_templates_path = current_dir / "data" / "utr_templates"
             if utr_templates_path.exists():
                 return current_dir
             current_dir = current_dir.parent
-        
-        # 如果没找到，使用相对路径
+
+        # If not found, use relative path
         return Path(__file__).resolve().parent.parent.parent
     
     def _parse_fasta_like_file(self, file_path: Path) -> str:
-        """解析FASTA格式的UTR文件
-        
+        """Parse FASTA format UTR file
+
         Args:
-            file_path: UTR模板文件路径
-            
+            file_path: UTR template file path
+
         Returns:
-            str: UTR序列
+            str: UTR sequence
         """
         if not file_path.exists():
-            raise FileNotFoundError(f"UTR模板文件不存在: {file_path}")
+            raise FileNotFoundError(f"UTR template file does not exist: {file_path}")
         
         with open(file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
@@ -73,41 +73,41 @@ class UTRLoader:
         for line in lines:
             line = line.strip()
             if line and not line.startswith('>'):
-                # 移除空格和换行符，只保留核苷酸序列
+                # Remove spaces and tabs, keep only nucleotide sequence
                 sequence_lines.append(line.replace(' ', '').replace('\t', ''))
-        
+
         if not sequence_lines:
-            raise ValueError(f"在文件 {file_path} 中未找到有效的序列")
-        
-        # 合并所有序列行
+            raise ValueError(f"No valid sequence found in file {file_path}")
+
+        # Merge all sequence lines
         sequence = ''.join(sequence_lines)
-        
-        # 验证序列只包含有效的核苷酸
+
+        # Validate sequence contains only valid nucleotides
         valid_nucleotides = set('ATCGU')
         if not set(sequence.upper()).issubset(valid_nucleotides):
             invalid_chars = set(sequence.upper()) - valid_nucleotides
-            raise ValueError(f"序列包含无效字符: {invalid_chars}")
+            raise ValueError(f"Sequence contains invalid characters: {invalid_chars}")
         
         return sequence.upper()
     
-    def load_utr_templates(self, 
+    def load_utr_templates(self,
                           utr5_file: Optional[str] = None,
                           utr3_file: Optional[str] = None,
                           force_reload: bool = False) -> Dict[str, str]:
-        """从文件加载UTR模板
-        
+        """Load UTR templates from files
+
         Args:
-            utr5_file: 5'UTR文件路径，默认为data/utr_templates/5utr_templates.txt
-            utr3_file: 3'UTR文件路径，默认为data/utr_templates/3utr_templates.txt
-            force_reload: 是否强制重新加载，忽略缓存
-            
+            utr5_file: 5'UTR file path, defaults to data/utr_templates/5utr_templates.txt
+            utr3_file: 3'UTR file path, defaults to data/utr_templates/3utr_templates.txt
+            force_reload: Whether to force reload, ignoring cache
+
         Returns:
-            Dict[str, str]: 包含UTR序列的字典
+            Dict[str, str]: Dictionary containing UTR sequences
         """
         if self._loaded and not force_reload:
             return self._cache
-        
-        # 设置默认文件路径
+
+        # Set default file paths
         if utr5_file is None:
             utr5_file = self._project_root / "data" / "utr_templates" / "5utr_templates.txt"
         else:
@@ -123,32 +123,32 @@ class UTRLoader:
                 utr3_file = self._project_root / utr3_file
         
         try:
-            # 加载5'UTR
+            # Load 5'UTR
             utr5_sequence = self._parse_fasta_like_file(utr5_file)
-            
-            # 加载3'UTR
+
+            # Load 3'UTR
             utr3_sequence = self._parse_fasta_like_file(utr3_file)
-            
-            # 更新缓存
+
+            # Update cache
             self._cache = {
                 'utr5_default': utr5_sequence,
                 'utr3_default': utr3_sequence,
                 'utr5_file': str(utr5_file),
                 'utr3_file': str(utr3_file)
             }
-            
+
             self._loaded = True
-            
+
             return self._cache
-            
+
         except Exception as e:
-            raise RuntimeError(f"加载UTR模板失败: {e}")
+            raise RuntimeError(f"Failed to load UTR templates: {e}")
     
     def get_default_utr5(self) -> str:
-        """获取默认5'UTR序列
-        
+        """Get default 5'UTR sequence
+
         Returns:
-            str: 5'UTR序列
+            str: 5'UTR sequence
         """
         if not self._loaded:
             self.load_utr_templates()
@@ -156,10 +156,10 @@ class UTRLoader:
         return self._cache.get('utr5_default', '')
     
     def get_default_utr3(self) -> str:
-        """获取默认3'UTR序列
-        
+        """Get default 3'UTR sequence
+
         Returns:
-            str: 3'UTR序列
+            str: 3'UTR sequence
         """
         if not self._loaded:
             self.load_utr_templates()
@@ -167,10 +167,10 @@ class UTRLoader:
         return self._cache.get('utr3_default', '')
     
     def get_utr_info(self) -> Dict[str, any]:
-        """获取UTR信息
-        
+        """Get UTR information
+
         Returns:
-            Dict[str, any]: 包含UTR序列长度和来源文件的信息
+            Dict[str, any]: Information containing UTR sequence lengths and source files
         """
         if not self._loaded:
             self.load_utr_templates()
@@ -187,48 +187,48 @@ class UTRLoader:
         }
     
     def validate_utr_sequences(self) -> bool:
-        """验证UTR序列的有效性
-        
+        """Validate the validity of UTR sequences
+
         Returns:
-            bool: 序列是否有效
+            bool: Whether the sequences are valid
         """
         try:
             utr5 = self.get_default_utr5()
             utr3 = self.get_default_utr3()
-            
-            # 检查序列是否为空
+
+            # Check if sequences are empty
             if not utr5 or not utr3:
                 return False
-            
-            # 检查序列长度是否合理
+
+            # Check if sequence lengths are reasonable
             if len(utr5) < 10 or len(utr5) > 200:
                 return False
-            
+
             if len(utr3) < 5 or len(utr3) > 200:
                 return False
-            
-            # 检查序列是否只包含有效核苷酸
+
+            # Check if sequences contain only valid nucleotides
             valid_nucleotides = set('ATCGU')
             if not set(utr5).issubset(valid_nucleotides) or not set(utr3).issubset(valid_nucleotides):
                 return False
-            
+
             return True
-            
+
         except Exception:
             return False
 
 
-# 便利函数
+# Convenience functions
 def get_utr_loader() -> UTRLoader:
-    """获取UTR加载器实例的便利函数"""
+    """Convenience function to get UTR loader instance"""
     return UTRLoader.get_instance()
 
 
 def get_default_utrs() -> Dict[str, str]:
-    """获取默认UTR序列的便利函数
-    
+    """Convenience function to get default UTR sequences
+
     Returns:
-        Dict[str, str]: 包含utr5和utr3的字典
+        Dict[str, str]: Dictionary containing utr5 and utr3
     """
     loader = get_utr_loader()
     return {
@@ -238,23 +238,23 @@ def get_default_utrs() -> Dict[str, str]:
 
 
 if __name__ == "__main__":
-    # 测试代码
+    # Test code
     loader = UTRLoader.get_instance()
-    
+
     try:
         loader.load_utr_templates()
-        
-        print("UTR加载器测试:")
-        print(f"5'UTR长度: {len(loader.get_default_utr5())}")
-        print(f"3'UTR长度: {len(loader.get_default_utr3())}")
-        print(f"5'UTR序列: {loader.get_default_utr5()}")
-        print(f"3'UTR序列: {loader.get_default_utr3()}")
-        
+
+        print("UTR loader test:")
+        print(f"5'UTR length: {len(loader.get_default_utr5())}")
+        print(f"3'UTR length: {len(loader.get_default_utr3())}")
+        print(f"5'UTR sequence: {loader.get_default_utr5()}")
+        print(f"3'UTR sequence: {loader.get_default_utr3()}")
+
         info = loader.get_utr_info()
-        print(f"UTR信息: {info}")
-        
+        print(f"UTR information: {info}")
+
         is_valid = loader.validate_utr_sequences()
-        print(f"序列验证: {'通过' if is_valid else '失败'}")
-        
+        print(f"Sequence validation: {'Passed' if is_valid else 'Failed'}")
+
     except Exception as e:
-        print(f"测试失败: {e}")
+        print(f"Test failed: {e}")

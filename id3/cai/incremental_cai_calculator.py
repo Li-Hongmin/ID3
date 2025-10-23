@@ -178,22 +178,22 @@ class IncrementalCAICalculator:
         
         return self.get_current_cai()
     
-    def update_from_switching_events(self, 
+    def update_from_switching_events(self,
                                     cai_factor: float,
                                     switching_events: List,
                                     pi_best_codons: Dict[int, int],
                                     w_best_codons: Dict[int, int]) -> float:
         """
-        Update CAI based on which switching events are active at given CAI插值因子.
-        
+        Update CAI based on which switching events are active at given CAI interpolation factor.
+
         Args:
-            cai_factor: Current CAI interpolation parameter (CAI插值因子)
-            switching_events: List of switching events with CAI插值因子* values
+            cai_factor: Current CAI interpolation parameter (alpha value)
+            switching_events: List of switching events with alpha* values
             pi_best_codons: Best codon in π distribution for each position
             w_best_codons: Best codon in w distribution for each position
-            
+
         Returns:
-            CAI value at this CAI插值因子
+            CAI value at this CAI interpolation factor
         """
         # Determine which positions have switched
         changes = []
@@ -338,45 +338,45 @@ class CachedIncrementalCalculator(IncrementalCAICalculator):
                          pi_best_codons: Dict[int, int],
                          w_best_codons: Dict[int, int]) -> Tuple[float, bool]:
         """
+        Get CAI value at given CAI interpolation factor with incremental update.
 
-        
+        This method uses incremental calculation to efficiently compute CAI
+        by only updating positions that have changed.
 
-
-        
         Args:
-
+            cai_factor: CAI interpolation parameter (alpha value)
             switching_events: Switching events
             pi_best_codons: π-optimal codons
             w_best_codons: w-optimal codons
-            
+
         Returns:
             (CAI value, always_false_for_cache_hit)
         """
-
+        # Track cache statistics
         self.cache_misses += 1
-        
 
+        # Compute CAI using incremental update
         cai = self.update_from_switching_events(
             cai_factor, switching_events, pi_best_codons, w_best_codons
         )
-        
+
         return cai, False
     
     def get_cache_statistics(self) -> Dict:
         """Get cache performance statistics."""
         total_accesses = self.cache_hits + self.cache_misses
         hit_rate = self.cache_hits / max(total_accesses, 1)
-        
-        return {
 
+        return {
+            'total_accesses': total_accesses,
             'cache_hits': self.cache_hits,
             'cache_misses': self.cache_misses,
             'hit_rate': f"{hit_rate:.1%}",
-
+            'cache_efficiency': hit_rate
         }
-    
+
     def clear_cache(self):
         """Clear the cache statistics."""
-
+        # Reset cache hit/miss counters
         self.cache_hits = 0
         self.cache_misses = 0

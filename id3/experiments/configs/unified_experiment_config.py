@@ -46,7 +46,7 @@ class UnifiedExperimentConfig:
     learning_rate: float = 0.05
     batch_size: int = 1
     seeds: int = 1
-    base_seed: int = 42  # 起始种子值
+    base_seed: int = 42  # Starting seed value
     device: str = 'cuda'
 
     # CAI parameters
@@ -54,7 +54,7 @@ class UnifiedExperimentConfig:
     cai_target: float = 0.8
     lambda_cai: float = 1.0
     species: str = 'ecoli_bl21de3'  # Can be overridden, not hardcoded in logic
-    disable_constraint_penalty: bool = False  # 禁用约束惩罚（CAI no penalty模式）
+    disable_constraint_penalty: bool = False  # Disable constraint penalty (CAI no penalty mode)
     
     # Adaptive lambda_cai parameters
     adaptive_lambda_cai: bool = False
@@ -65,11 +65,11 @@ class UnifiedExperimentConfig:
     smoothing_factor: float = 0.9
 
     # Execution parameters
-    # 移除parallel参数，始终使用串行执行以获得最佳性能
+    # Removed parallel parameter, always use serial execution for optimal performance
     verbose: bool = False
-    mixed_precision: bool = False  # 混合精度训练（全开或全关）
-    gradient_clip: float = 1.0  # 梯度裁剪阈值
-    disable_inner_tqdm: bool = False  # 禁用内层tqdm进度条，减少日志量
+    mixed_precision: bool = False  # Mixed precision training (fully enabled or fully disabled)
+    gradient_clip: float = 1.0  # Gradient clipping threshold
+    disable_inner_tqdm: bool = False  # Disable inner tqdm progress bar to reduce logging
 
     # Output parameters
     output_dir: Optional[str] = None
@@ -158,7 +158,7 @@ class UnifiedExperimentConfig:
         if hasattr(args, 'smoothing_factor') and args.smoothing_factor is not None:
             config.smoothing_factor = args.smoothing_factor
 
-        # 移除parallel参数处理，始终串行执行
+        # Removed parallel parameter handling, always use serial execution
 
         if hasattr(args, 'verbose'):
             config.verbose = args.verbose
@@ -173,18 +173,18 @@ class UnifiedExperimentConfig:
             config.save_trajectories = args.save_trajectories
 
         return config
-    
+
     def _get_mode_string(self) -> str:
-        """获取模式描述字符串"""
+        """Get mode description string"""
         if not self.enable_cai:
             return 'unified_accessibility_optimization'
         elif self.disable_constraint_penalty:
             return 'unified_cai_no_penalty'
         else:
             return 'unified_cai_with_penalty'
-    
+
     def _get_theory_string(self) -> str:
-        """获取理论公式字符串"""
+        """Get theory formula string"""
         if not self.enable_cai:
             return 'L_Access + constraint_penalties'
         elif self.disable_constraint_penalty:
@@ -232,7 +232,7 @@ class UnifiedExperimentConfig:
         if self.output_dir:
             output_dir = Path(self.output_dir)
         else:
-            # 如果还没有设置时间戳，则创建一个固定的时间戳
+            # If timestamp hasn't been set yet, create a fixed timestamp
             if not hasattr(self, '_output_timestamp'):
                 self._output_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
 
@@ -301,8 +301,8 @@ class UnifiedExperimentConfig:
         """Print configuration summary."""
         logger.info("🚀 Unified ID3-DeepRaccess Experiment Configuration")
         logger.info("=" * 60)
-        
-        # 显示模式信息
+
+        # Display mode information
         if not self.enable_cai:
             logger.info(f"Mode: Accessibility-only Optimization")
             logger.info(f"Theory: L_total = L_Access (+ constraint penalties)")
@@ -337,12 +337,12 @@ class ExperimentPresets:
     def quick_test() -> UnifiedExperimentConfig:
         """Quick test configuration for debugging - O15263 with 12 variants (no CAI)."""
         return UnifiedExperimentConfig(
-            proteins=['O15263'],  # 使用O15263蛋白质进行快速测试
-            constraints=['lagrangian', 'ams', 'cpc'],  # 3种约束
-            variants=['00', '01', '10', '11'],  # 4种变体
-            iterations=2,  # 快速测试用2次迭代
+            proteins=['O15263'],  # Use O15263 protein for quick test
+            constraints=['lagrangian', 'ams', 'cpc'],  # 3 constraints
+            variants=['00', '01', '10', '11'],  # 4 variants
+            iterations=2,  # 2 iterations for quick test
             seeds=1,
-            enable_cai=False,  # 默认不启用CAI
+            enable_cai=False,  # Do not enable CAI by default
             verbose=True
         )
 
@@ -350,16 +350,16 @@ class ExperimentPresets:
     def quick_test_cai_penalty() -> UnifiedExperimentConfig:
         """Quick test configuration for debugging - O15263 with 12 variants (with CAI and constraint penalty)."""
         return UnifiedExperimentConfig(
-            proteins=['O15263'],  # 使用O15263蛋白质进行快速测试
-            constraints=['lagrangian', 'ams', 'cpc'],  # 3种约束
-            variants=['00', '01', '10', '11'],  # 4种变体
-            iterations=2,  # 快速测试用2次迭代
+            proteins=['O15263'],  # Use O15263 protein for quick test
+            constraints=['lagrangian', 'ams', 'cpc'],  # 3 constraints
+            variants=['00', '01', '10', '11'],  # 4 variants
+            iterations=2,  # 2 iterations for quick test
             seeds=1,
-            enable_cai=True,  # 启用CAI优化
+            enable_cai=True,  # Enable CAI optimization
             cai_target=0.8,
             lambda_cai=1.0,
             species='ecoli_bl21de3',
-            disable_constraint_penalty=False,  # 包含约束惩罚
+            disable_constraint_penalty=False,  # Include constraint penalty
             verbose=True
         )
     
@@ -367,16 +367,16 @@ class ExperimentPresets:
     def quick_test_cai_no_penalty() -> UnifiedExperimentConfig:
         """Quick test configuration for debugging - O15263 with 12 variants (CAI no penalty)."""
         return UnifiedExperimentConfig(
-            proteins=['O15263'],  # 使用O15263蛋白质进行快速测试
-            constraints=['lagrangian', 'ams', 'cpc'],  # 3种约束
-            variants=['00', '01', '10', '11'],  # 4种变体
-            iterations=2,  # 快速测试用2次迭代
+            proteins=['O15263'],  # Use O15263 protein for quick test
+            constraints=['lagrangian', 'ams', 'cpc'],  # 3 constraints
+            variants=['00', '01', '10', '11'],  # 4 variants
+            iterations=2,  # 2 iterations for quick test
             seeds=1,
-            enable_cai=True,  # 启用CAI优化
+            enable_cai=True,  # Enable CAI optimization
             cai_target=0.8,
             lambda_cai=1.0,
             species='ecoli_bl21de3',
-            disable_constraint_penalty=True,  # 禁用约束惩罚
+            disable_constraint_penalty=True,  # Disable constraint penalty
             verbose=True
         )
 
@@ -384,8 +384,8 @@ class ExperimentPresets:
     def quick_test_both() -> List[UnifiedExperimentConfig]:
         """Quick test configuration for both CAI and non-CAI optimization."""
         return [
-            ExperimentPresets.quick_test(),      # 不启用CAI的配置
-            ExperimentPresets.quick_test_cai_penalty()   # 启用CAI的配置（有约束惩罚）
+            ExperimentPresets.quick_test(),      # Configuration without CAI
+            ExperimentPresets.quick_test_cai_penalty()   # Configuration with CAI (with constraint penalty)
         ]
     
     @staticmethod
@@ -399,7 +399,7 @@ class ExperimentPresets:
     @staticmethod
     def full_12x12() -> UnifiedExperimentConfig:
         """Full 12x12 experiment matrix (without CAI)."""
-        # 使用实际可用的蛋白质
+        # Use actually available proteins
         return UnifiedExperimentConfig(
             proteins=['O15263', 'P00004', 'P01308', 'P01825',
                      'P04637', 'P0CG48', 'P0DTC2', 'P0DTC9',
@@ -408,13 +408,13 @@ class ExperimentPresets:
             variants=['00', '01', '10', '11'],
             iterations=1000,
             seeds=1,
-            enable_cai=False  # 纯accessibility优化
+            enable_cai=False  # Pure accessibility optimization
         )
 
     @staticmethod
     def full_12x12_cai_penalty() -> UnifiedExperimentConfig:
         """Full 12x12 experiment matrix with CAI optimization (with constraint penalty)."""
-        # 使用实际可用的蛋白质
+        # Use actually available proteins
         return UnifiedExperimentConfig(
             proteins=['O15263', 'P00004', 'P01308', 'P01825',
                      'P04637', 'P0CG48', 'P0DTC2', 'P0DTC9',
@@ -423,17 +423,17 @@ class ExperimentPresets:
             variants=['00', '01', '10', '11'],
             iterations=1000,
             seeds=1,
-            enable_cai=True,  # 启用CAI优化
+            enable_cai=True,  # Enable CAI optimization
             cai_target=0.8,
             lambda_cai=1.0,
             species='ecoli_bl21de3',
-            disable_constraint_penalty=False  # 包含约束惩罚
+            disable_constraint_penalty=False  # Include constraint penalty
         )
     
     @staticmethod
     def full_12x12_cai_no_penalty() -> UnifiedExperimentConfig:
         """Full 12x12 experiment matrix with CAI optimization (no constraint penalty)."""
-        # 使用实际可用的蛋白质
+        # Use actually available proteins
         return UnifiedExperimentConfig(
             proteins=['O15263', 'P00004', 'P01308', 'P01825',
                      'P04637', 'P0CG48', 'P0DTC2', 'P0DTC9',
@@ -442,27 +442,27 @@ class ExperimentPresets:
             variants=['00', '01', '10', '11'],
             iterations=1000,
             seeds=1,
-            enable_cai=True,  # 启用CAI优化
+            enable_cai=True,  # Enable CAI optimization
             cai_target=0.8,
             lambda_cai=1.0,
             species='ecoli_bl21de3',
-            disable_constraint_penalty=True  # 禁用约束惩罚
+            disable_constraint_penalty=True  # Disable constraint penalty
         )
 
     @staticmethod
     def adaptive_lambda_cai_test() -> UnifiedExperimentConfig:
         """Quick test with adaptive lambda_cai optimization."""
         return UnifiedExperimentConfig(
-            proteins=['P42212'],  # 最佳蛋白质
-            constraints=['lagrangian'],  # 最佳约束类型
-            variants=['11'],  # 最佳变体
+            proteins=['P42212'],  # Best protein
+            constraints=['lagrangian'],  # Best constraint type
+            variants=['11'],  # Best variant
             iterations=100,
             seeds=1,
             enable_cai=True,
             cai_target=0.8,
-            lambda_cai=0.1,  # 初始值
+            lambda_cai=0.1,  # Initial value
             species='ecoli_bl21de3',
-            # 启用自适应lambda_cai优化
+            # Enable adaptive lambda_cai optimization
             adaptive_lambda_cai=True,
             lambda_cai_lr=0.1,
             lambda_cai_max=2.0,
@@ -476,8 +476,8 @@ class ExperimentPresets:
     def full_12x12_both() -> List[UnifiedExperimentConfig]:
         """Full 12x12 experiment matrix for both CAI and non-CAI optimization."""
         return [
-            ExperimentPresets.full_12x12_cai_penalty(),   # 启用CAI的完整实验（有约束惩罚）
-            ExperimentPresets.full_12x12(),      # 不启用CAI的完整实验
+            ExperimentPresets.full_12x12_cai_penalty(),   # Full experiment with CAI enabled (with constraint penalty)
+            ExperimentPresets.full_12x12(),      # Full experiment without CAI
         ]
     
     @staticmethod

@@ -439,10 +439,10 @@ class CodonProfileConstraint(BaseConstraint):
         """
         Get the current discrete RNA sequence.
 
-        简化版本：直接从缓存的结果中获取离散序列字符串
-        如果没有缓存，返回空字符串或抛出异常
+        Simplified version: directly retrieve discrete sequence string from cached results.
+        If no cache is available, return empty string or raise exception.
 
-        注意：forward()方法现在直接在结果中包含'discrete_sequence'字段
+        Note: forward() method now directly includes 'discrete_sequence' field in results.
         """
         if hasattr(self, '_last_result') and self._last_result is not None:
 

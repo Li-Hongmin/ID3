@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
+Constraint-Satisfied Argmax
 
-
+Selects the most likely valid codon for each amino acid position while
+maintaining amino acid sequence constraints.
 """
 
 import torch
@@ -12,16 +14,17 @@ from .constants import amino_acid_token_map, amino_acid_to_codon_matrix, codon_t
 def get_constraint_satisfied_argmax(rna_probs: torch.Tensor,
                                   amino_acid_sequence: str) -> torch.Tensor:
     """
+    Select the most likely valid codon for each amino acid position.
 
-
-
+    This function finds the codon with maximum probability among all valid
+    codons that encode the target amino acid at each position.
 
     Args:
-
-
+        rna_probs: RNA probability distribution [batch, seq_len, 4]
+        amino_acid_sequence: Target amino acid sequence string
 
     Returns:
-
+        One-hot encoded RNA sequence [batch, seq_len, 4] with constraint satisfaction
     """
     batch_size, seq_len, num_bases = rna_probs.shape
     num_positions = len(amino_acid_sequence)
@@ -29,7 +32,7 @@ def get_constraint_satisfied_argmax(rna_probs: torch.Tensor,
     dtype = rna_probs.dtype
 
 
-    assert seq_len == num_positions * 3, f"RNA长度{seq_len} != 氨基酸长度{num_positions} * 3"
+    assert seq_len == num_positions * 3, f"RNA length {seq_len} != amino acid length {num_positions} * 3"
 
 
     rna_reshaped = rna_probs.view(batch_size, num_positions, 3, 4)
@@ -108,4 +111,4 @@ if __name__ == "__main__":
     rna_probs = torch.softmax(torch.randn(batch_size, seq_len, 4), dim=-1)
     
     result = get_constraint_satisfied_argmax(rna_probs, amino_acid_sequence)
-    print(f"测试通过: {result.shape}")
+    print(f"Test passed: {result.shape}")

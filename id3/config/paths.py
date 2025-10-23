@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-路径配置模块
+Path configuration module
 
-集中管理所有项目路径，避免硬编码
+Centralized management of all project paths, avoiding hardcoding
 """
 
 import os
@@ -10,44 +10,44 @@ from pathlib import Path
 
 
 class PathConfig:
-    """路径配置管理器"""
-    
-    # 项目根目录
+    """Path configuration manager"""
+
+    # Project root directory
     PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-    
-    # 数据目录
+
+    # Data directory
     DATA_DIR = PROJECT_ROOT / "data"
     UTR_TEMPLATES_DIR = DATA_DIR / "utr_templates"
-    
-    # DeepRaccess模型路径
+
+    # DeepRaccess model path
     DEEPRACCESS_DIR = PROJECT_ROOT / "DeepRaccess"
     DEEPRACCESS_MODEL_PATH = DEEPRACCESS_DIR / "path" / "FCN_structured.pth"
-    
-    # 实验结果目录
+
+    # Experiment results directory
     EXPERIMENTS_DIR = PROJECT_ROOT / "experiments"
     RESULTS_DIR = EXPERIMENTS_DIR / "results"
-    
-    # 存档目录
+
+    # Archive directory
     ARCHIVES_DIR = PROJECT_ROOT / "archives"
     
     @classmethod
     def get_deepraccess_model_path(cls) -> str:
-        """获取DeepRaccess模型路径"""
+        """Get DeepRaccess model path"""
         return str(cls.DEEPRACCESS_MODEL_PATH)
-    
+
     @classmethod
     def get_data_dir(cls) -> str:
-        """获取数据目录路径"""
+        """Get data directory path"""
         return str(cls.DATA_DIR)
-    
+
     @classmethod
     def get_results_dir(cls) -> str:
-        """获取结果目录路径"""
+        """Get results directory path"""
         return str(cls.RESULTS_DIR)
-    
+
     @classmethod
     def ensure_dirs_exist(cls):
-        """确保所有必要的目录存在"""
+        """Ensure all necessary directories exist"""
         dirs = [
             cls.DATA_DIR,
             cls.RESULTS_DIR,
@@ -58,17 +58,17 @@ class PathConfig:
             dir_path.mkdir(parents=True, exist_ok=True)
 
 
-# 便利函数
+# Convenience functions
 def get_deepraccess_model_path() -> str:
-    """获取DeepRaccess模型路径的便利函数"""
+    """Convenience function to get DeepRaccess model path"""
     return PathConfig.get_deepraccess_model_path()
 
 
 def get_data_dir() -> str:
-    """获取数据目录路径的便利函数"""
+    """Convenience function to get data directory path"""
     return PathConfig.get_data_dir()
 
 
 def get_results_dir() -> str:
-    """获取结果目录路径的便利函数"""
+    """Convenience function to get results directory path"""
     return PathConfig.get_results_dir()

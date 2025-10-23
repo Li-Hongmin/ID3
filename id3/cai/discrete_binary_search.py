@@ -350,15 +350,15 @@ class DiscreteCAISearcher:
                              codon_indices: torch.Tensor,
                              active_events: List[SwitchingEvent]) -> float:
         """
-        Compute CAI value at given CAI插值因子 by applying active switching events.
-        
+        Compute CAI value at given CAI interpolation factor by applying active switching events.
+
         Args:
-            cai_factor: CAI interpolation parameter (CAI插值因子)
+            cai_factor: CAI interpolation parameter (alpha value)
             pi_probs: π probability distribution
             valid_codon_mask: Valid codon mask
             codon_indices: Global codon indices
-            active_events: Events that have switched (CAI插值因子* < cai_factor)
-            
+            active_events: Events that have switched (alpha* < cai_factor)
+
         Returns:
             CAI value at this α
         """

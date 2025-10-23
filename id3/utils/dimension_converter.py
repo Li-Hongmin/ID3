@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
+Dimension Converter Module
 
-
+Handles conversions between codon space (64-dimensional) and nucleotide space (4-dimensional)
+for ID3 framework tensor operations.
 """
 
 import torch
@@ -11,30 +13,30 @@ import numpy as np
 
 class DimensionConverter:
     """
+    Dimension converter between codon and nucleotide spaces.
 
-    
+    Converts between:
+    - Codon space: 64-dimensional (all possible triplet combinations)
+    - Nucleotide space: 4-dimensional (A, C, G, U/T)
 
-
-
-
-
+    Maintains gradient flow for optimization and supports batch operations.
     """
     
     def __init__(self, device: torch.device = None):
         """
+        Initialize dimension converter.
 
-        
         Args:
-
+            device: PyTorch device (defaults to CUDA if available, else CPU)
         """
         self.device = device or torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        
 
+        # Create mapping matrices for codon ↔ nucleotide conversion
         self._create_codon_nucleotide_mapping()
         
     def _create_codon_nucleotide_mapping(self):
+        """Create mapping matrix from 64 codons to nucleotide positions."""
 
-        
 
         bases = ['A', 'C', 'G', 'T']
         base_to_idx = {'A': 0, 'C': 1, 'G': 2, 'T': 3}
@@ -65,13 +67,13 @@ class DimensionConverter:
     
     def detect_tensor_space(self, tensor: torch.Tensor) -> str:
         """
-        检测tensor所在的空间类型
-        
+        Detect the tensor space type (nucleotide or codon).
+
         Args:
-            tensor: 输入张量
-            
+            tensor: Input tensor
+
         Returns:
-            'nucleotide' (4维) 或 'codon' (64维)
+            'nucleotide' (4-dimensional) or 'codon' (64-dimensional)
         """
         last_dim = tensor.shape[-1]
         
@@ -80,24 +82,25 @@ class DimensionConverter:
         elif last_dim == 64:
             return 'codon'
         else:
+            raise ValueError(f"Cannot detect tensor space: last dimension is {last_dim}, expected 4 or 64")
 
-    
-    def codon_to_nucleotide(self, 
+    def codon_to_nucleotide(self,
                            codon_probs: torch.Tensor,
                            preserve_gradients: bool = True) -> torch.Tensor:
         """
-        密码子概率 → 核苷酸概率
-        
-        Args:
-            codon_probs: 密码子概率 [..., seq_len, 64] 
-            preserve_gradients: 是否保持梯度流
-            
-        Returns:
-            nucleotide_probs: 核苷酸概率 [..., seq_len*3, 4]
-        """
-        
+        Convert codon probabilities to nucleotide probabilities.
 
+        Args:
+            codon_probs: Codon probability tensor [..., seq_len, 64]
+            preserve_gradients: Whether to preserve gradient flow
+
+        Returns:
+            nucleotide_probs: Nucleotide probability tensor [..., seq_len*3, 4]
+        """
+
+        # Validate input dimensions
         if codon_probs.shape[-1] != 64:
+            raise ValueError(f"Expected codon_probs last dimension to be 64, got {codon_probs.shape[-1]}")
 
         
         original_shape = codon_probs.shape
@@ -129,26 +132,28 @@ class DimensionConverter:
                                       nucleotide_probs: torch.Tensor,
                                       amino_acid_sequence: str = None) -> torch.Tensor:
         """
-        核苷酸概率 → 密码子概率 (近似转换)
-        
-        这是一个更复杂的逆向转换，因为多个核苷酸组合对应一个密码子
-        
-        Args:
-            nucleotide_probs: 核苷酸概率 [..., seq_len*3, 4]
-            amino_acid_sequence: 氨基酸序列，用于约束有效密码子
-            
-        Returns:
-            codon_probs: 密码子概率 [..., seq_len, 64]
-        """
-        
-        if nucleotide_probs.shape[-1] != 4:
+        Convert nucleotide probabilities to codon probabilities (approximate).
 
-        
+        This is a more complex inverse transformation because multiple nucleotide
+        combinations correspond to a single codon.
+
+        Args:
+            nucleotide_probs: Nucleotide probability tensor [..., seq_len*3, 4]
+            amino_acid_sequence: Amino acid sequence to constrain valid codons
+
+        Returns:
+            codon_probs: Codon probability tensor [..., seq_len, 64]
+        """
+
+        if nucleotide_probs.shape[-1] != 4:
+            raise ValueError(f"Expected nucleotide_probs last dimension to be 4, got {nucleotide_probs.shape[-1]}")
+
         original_shape = nucleotide_probs.shape
         batch_dims = original_shape[:-2]
         nucleotide_len = original_shape[-2]
-        
+
         if nucleotide_len % 3 != 0:
+            raise ValueError(f"Nucleotide length must be divisible by 3, got {nucleotide_len}")
 
         
         seq_len = nucleotide_len // 3
@@ -186,37 +191,37 @@ class DimensionConverter:
         return codon_probs
     
     def _ensure_normalization(self, probs: torch.Tensor) -> torch.Tensor:
-        """确保概率分布归一化"""
+        """Ensure probability distribution is normalized."""
         prob_sums = probs.sum(dim=-1, keepdim=True)
         normalized_probs = probs / (prob_sums + 1e-8)
         return normalized_probs
     
-    def auto_convert_to_nucleotide(self, 
+    def auto_convert_to_nucleotide(self,
                                   tensor: torch.Tensor,
                                   preserve_gradients: bool = True) -> torch.Tensor:
         """
+        Automatically convert tensor to nucleotide space if needed.
 
-        
         Args:
+            tensor: Input tensor (either codon or nucleotide space)
+            preserve_gradients: Whether to preserve gradient flow
 
-
-            
         Returns:
-
+            nucleotide_tensor: Tensor in nucleotide space
         """
         space = self.detect_tensor_space(tensor)
-        
-        if space == 'nucleotide':
 
+        if space == 'nucleotide':
+            # Already in nucleotide space, no conversion needed
             return tensor
         elif space == 'codon':
-
+            # Convert from codon to nucleotide space
             return self.codon_to_nucleotide(tensor, preserve_gradients)
         else:
-            raise ValueError(f"未知的tensor空间: {space}")
-    
-    def get_conversion_info(self, tensor: torch.Tensor) -> dict:
+            raise ValueError(f"Unknown tensor space: {space}")
 
+    def get_conversion_info(self, tensor: torch.Tensor) -> dict:
+        """Get information about tensor space and conversion requirements."""
         space = self.detect_tensor_space(tensor)
         
         info = {
@@ -226,9 +231,9 @@ class DimensionConverter:
             'requires_conversion': space == 'codon',
             'device': tensor.device
         }
-        
-        if space == 'codon':
 
+        if space == 'codon':
+            # Calculate what the nucleotide shape would be after conversion
             original_shape = tensor.shape
             nucleotide_shape = original_shape[:-2] + (original_shape[-2] * 3, 4)
             info['converted_shape'] = list(nucleotide_shape)
@@ -240,7 +245,7 @@ class DimensionConverter:
 _global_converter = None
 
 def get_dimension_converter(device: torch.device = None) -> DimensionConverter:
-    """获取全局维度转换器实例"""
+    """Get global dimension converter instance."""
     global _global_converter
     
     if _global_converter is None:
@@ -251,11 +256,11 @@ def get_dimension_converter(device: torch.device = None) -> DimensionConverter:
 
 
 def convert_to_nucleotide(tensor: torch.Tensor, device: torch.device = None) -> torch.Tensor:
-
+    """Convenience function: convert tensor to nucleotide space."""
     converter = get_dimension_converter(device or tensor.device)
     return converter.auto_convert_to_nucleotide(tensor)
 
 def detect_tensor_space(tensor: torch.Tensor) -> str:
-    """便捷函数：检测tensor空间类型"""
+    """Convenience function: detect tensor space type."""
     converter = get_dimension_converter(tensor.device)
     return converter.detect_tensor_space(tensor)

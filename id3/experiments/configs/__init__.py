@@ -1,5 +1,5 @@
 """
-实验配置模块
+Experiment Configuration Module
 """
 
 from .experiment_config import ExperimentConfig

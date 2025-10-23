@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
+Serialization Module
 
-
+Handles serialization and deserialization of ID3 data structures including
+numpy arrays, PyTorch tensors, and step records with metadata.
 """
 
 import numpy as np
@@ -14,13 +16,13 @@ from datetime import datetime
 
 def serialize_data(obj: Any) -> Any:
     """
+    Serialize Python objects to JSON-compatible format.
 
-    
     Args:
+        obj: Object to serialize (supports numpy arrays, PyTorch tensors, dicts, lists)
 
-        
     Returns:
-
+        serialized_obj: JSON-serializable representation
     """
     if isinstance(obj, np.ndarray):
         return {
@@ -53,13 +55,13 @@ def serialize_data(obj: Any) -> Any:
 
 def deserialize_data(obj: Any) -> Any:
     """
+    Deserialize JSON-compatible format back to Python objects.
 
-    
     Args:
+        obj: Serialized object to deserialize
 
-        
     Returns:
-
+        deserialized_obj: Original Python object (numpy array, PyTorch tensor, etc.)
     """
     if isinstance(obj, dict):
         if obj.get('__type__') == 'ndarray':
@@ -76,27 +78,27 @@ def deserialize_data(obj: Any) -> Any:
 
 
 def save_step_records_to_json(
-    step_records: List[Dict], 
-    metadata: Dict, 
-    output_file: Union[str, Path], 
+    step_records: List[Dict],
+    metadata: Dict,
+    output_file: Union[str, Path],
     compress: bool = False
 ) -> Path:
     """
+    Save step records and metadata to JSON file (with optional compression).
 
-    
     Args:
+        step_records: List of step record dictionaries
+        metadata: Metadata dictionary
+        output_file: Output file path
+        compress: If True, use gzip compression (.json.gz)
 
-
-
-
-        
     Returns:
-
+        output_path: Path to saved file
     """
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
 
+    # Serialize all data
     serialized_data = {
         'metadata': serialize_data(metadata),
         'step_records': serialize_data(step_records),
@@ -107,8 +109,8 @@ def save_step_records_to_json(
             'compressed': compress
         }
     }
-    
 
+    # Save to file (with optional compression)
     if compress:
         import gzip
         output_path = output_path.with_suffix('.json.gz')
@@ -123,17 +125,17 @@ def save_step_records_to_json(
 
 def load_step_records_from_json(input_file: Union[str, Path]) -> tuple:
     """
+    Load step records and metadata from JSON file (with automatic decompression).
 
-    
     Args:
+        input_file: Input file path (.json or .json.gz)
 
-        
     Returns:
-        (step_records, metadata, serialization_info)
+        (step_records, metadata, serialization_info): Tuple of deserialized data
     """
     input_path = Path(input_file)
-    
 
+    # Load from file (automatic decompression)
     if input_path.suffix == '.gz':
         import gzip
         with gzip.open(input_path, 'rt', encoding='utf-8') as f:
@@ -141,8 +143,8 @@ def load_step_records_from_json(input_file: Union[str, Path]) -> tuple:
     else:
         with open(input_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
-    
 
+    # Deserialize data
     step_records = deserialize_data(data['step_records'])
     metadata = deserialize_data(data['metadata'])
     serialization_info = data.get('serialization_info', {})
@@ -152,42 +154,42 @@ def load_step_records_from_json(input_file: Union[str, Path]) -> tuple:
 
 def generate_step_summary(step_records: List[Dict]) -> Dict:
     """
+    Generate summary statistics from step records.
 
-    
     Args:
+        step_records: List of step record dictionaries
 
-        
     Returns:
-
+        summary: Dictionary with performance metrics and trends
     """
     if not step_records:
         return {
             'total_steps': 0,
             'error': 'No step records provided'
         }
-    
 
+    # Basic statistics
     total_steps = len(step_records)
-    
 
+    # Extract accessibility scores
     accessibility_scores = [
-        step.get('true_accessibility', float('inf')) 
+        step.get('true_accessibility', float('inf'))
         for step in step_records
     ]
     valid_scores = [s for s in accessibility_scores if s != float('inf')]
-    
 
+    # Count valid steps
     valid_steps = sum(1 for step in step_records if step.get('is_valid', True))
-    
 
+    # Calculate performance metrics
     if valid_scores:
         best_score = min(valid_scores)
         convergence_step = next(
-            (i for i, score in enumerate(accessibility_scores) if score == best_score), 
+            (i for i, score in enumerate(accessibility_scores) if score == best_score),
             len(step_records) - 1
         )
-        
 
+        # Calculate stability (standard deviation of recent scores)
         stability_window = max(1, total_steps // 10)
         recent_scores = valid_scores[-stability_window:] if len(valid_scores) >= stability_window else valid_scores
         stability = float(np.std(recent_scores)) if len(recent_scores) > 1 else 0.0
@@ -195,8 +197,8 @@ def generate_step_summary(step_records: List[Dict]) -> Dict:
         best_score = float('inf')
         convergence_step = -1
         stability = float('inf')
-    
 
+    # Extract loss values
     loss_values = [step.get('total_loss', 0) for step in step_records]
     
     return {
@@ -232,13 +234,13 @@ def generate_step_summary(step_records: List[Dict]) -> Dict:
 
 def calculate_improvement_rate(scores: List[float]) -> float:
     """
+    Calculate improvement rate from score progression.
 
-    
     Args:
+        scores: List of accessibility scores over time
 
-        
     Returns:
-
+        improvement_rate: Relative improvement from start to end (negative = worse)
     """
     if len(scores) < 10:
         return 0.0

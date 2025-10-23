@@ -1,8 +1,8 @@
 """
-ID3-DeepRaccess基础实验系统
+ID3-DeepRaccess Base Experiment System
 
-纯净的可访问性优化实验，不包含CAI集成逻辑。
+Pure accessibility optimization experiments without CAI integration logic.
 """
 
-# 只导出必要的类
+# Only export necessary classes
 __all__ = []

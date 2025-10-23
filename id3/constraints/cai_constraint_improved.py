@@ -193,11 +193,11 @@ class CAIEnhancedPsiFunction:
 
 class CAIConstraint(nn.Module):
     """
-    CAI约束模块
-    
-    作为ID3框架的插件，与现有约束（CPC/RAMS/Lagrangian）协同工作。
+    CAI Constraint Module
+
+    Acts as a plugin to the ID3 framework, working collaboratively with existing constraints (CPC/RAMS/Lagrangian).
     """
-    
+
     def __init__(self,
                  amino_acid_sequence: str,
                  target_cai: float = 0.8,
@@ -206,15 +206,15 @@ class CAIConstraint(nn.Module):
                  device: Optional[torch.device] = None,
                  optimizer_type: str = 'binary_search'):
         """
-        初始化CAI约束
-        
+        Initialize CAI constraint
+
         Args:
-            amino_acid_sequence: 目标氨基酸序列
-            target_cai: 目标CAI值
-            lambda_cai: CAI损失权重
-            species: 物种
-            device: 计算设备
-            optimizer_type: 优化器类型
+            amino_acid_sequence: Target amino acid sequence
+            target_cai: Target CAI value
+            lambda_cai: CAI loss weight
+            species: Species
+            device: Computation device
+            optimizer_type: Optimizer type
         """
         super().__init__()
         
@@ -237,20 +237,20 @@ class CAIConstraint(nn.Module):
         
         logger.info(f"CAIConstraint initialized: target={target_cai:.3f}, lambda={lambda_cai:.3f}")
     
-    def forward(self, 
+    def forward(self,
                 codon_probabilities: torch.Tensor,
                 beta: float = 1.0,
                 compute_loss: bool = True) -> Dict[str, Any]:
         """
-        前向传播
-        
+        Forward pass
+
         Args:
-            codon_probabilities: 密码子概率
-            beta: 离散化强度
-            compute_loss: 是否计算损失
-            
+            codon_probabilities: Codon probabilities
+            beta: Discretization strength
+            compute_loss: Whether to compute loss
+
         Returns:
-            包含离散序列、损失和元数据的字典
+            Dictionary containing discrete sequence, loss, and metadata
         """
 
         discrete_sequence, metadata = self.psi_function.apply(
@@ -275,9 +275,9 @@ class CAIConstraint(nn.Module):
     
     def _compute_cai_loss(self, sequence: torch.Tensor) -> torch.Tensor:
         """
-        计算CAI损失
-        
-        使用统一的CAI计算器，保持原有的损失计算逻辑。
+        Compute CAI loss
+
+        Uses unified CAI calculator, maintaining original loss computation logic.
         """
 
         current_cai = self.cai_calculator.compute_cai(
@@ -293,7 +293,7 @@ class CAIConstraint(nn.Module):
         return cai_loss
     
     def get_statistics(self) -> Dict[str, Any]:
-        """获取统计信息"""
+        """Get statistical information"""
         return {
             'target_cai': self.target_cai,
             'max_achievable_cai': self.psi_function.max_achievable_cai,

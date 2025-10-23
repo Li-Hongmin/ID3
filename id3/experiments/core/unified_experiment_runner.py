@@ -20,7 +20,7 @@ warnings.filterwarnings('ignore', category=UserWarning)
 import logging
 from tqdm import tqdm
 
-# 配置logger
+# Configure logger
 logger = logging.getLogger(__name__)
 
 from id3.constraints.lagrangian import LagrangianConstraint
@@ -48,20 +48,20 @@ class UnifiedExperimentRunner:
             config: Experiment configuration dictionary
         """
         self.config = config
-        # 修复：从字典配置中获取device，而不是用getattr
+        # Fix: Get device from dictionary config instead of using getattr
         self.device = torch.device(config.get('device', 'cuda'))
         self.data_loader = ProteinDataLoader()
         self.deepraccess = DeepRaccessID3Wrapper()
 
-        # 设置输出目录用于增量保存
-        # 修复：从字典配置中获取output_dir
+        # Set output directory for incremental saving
+        # Fix: Get output_dir from dictionary config
         if config.get('output_dir'):
             self.output_dir = Path(config['output_dir'])
         else:
             self.output_dir = self._get_output_dir()
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        
-        # 加载已有进度（如果存在）
+
+        # Load existing progress (if any)
         self.completed_experiments = self._load_existing_progress()
 
     def string_to_one_hot_tensor(self, sequence: str) -> torch.Tensor:
@@ -97,7 +97,7 @@ class UnifiedExperimentRunner:
         if len(variant) != 2:
             raise ValueError(f"Variant must be 2 digits, got: {variant}")
 
-        # Extract CAI parameters from config (修复：使用字典访问)
+        # Extract CAI parameters from config (Fix: use dictionary access)
         enable_cai = self.config.get('enable_cai', False)
         cai_target = self.config.get('cai_target', 0.8)
         lambda_cai = self.config.get('lambda_cai', 1.0)
@@ -152,7 +152,7 @@ class UnifiedExperimentRunner:
                 cai_target=cai_target,
                 cai_weight=lambda_cai,
                 device=str(self.device),
-                verbose=self.config.get('verbose', False),  # 传递verbose参数
+                verbose=self.config.get('verbose', False),  # Pass verbose parameter
                 # Adaptive lambda_cai parameters
                 adaptive_lambda_cai=adaptive_lambda_cai,
                 lambda_cai_lr=lambda_cai_lr,
@@ -203,8 +203,8 @@ class UnifiedExperimentRunner:
             iterations = self.config.get('iterations', 1000)
             learning_rate = self.config.get('learning_rate', 0.01)
             optimizer = torch.optim.AdamW(constraint.parameters(), lr=learning_rate)
-            
-            # Mixed precision setup (全开或全关)
+
+            # Mixed precision setup (fully enabled or fully disabled)
             use_amp = self.config.get('mixed_precision', False) and self.device.type == 'cuda'
             scaler = torch.cuda.amp.GradScaler() if use_amp else None
             if use_amp:
@@ -219,31 +219,31 @@ class UnifiedExperimentRunner:
                 'unified_loss': [],
                 'cai_loss': [],
                 'ecai_values': [],
-                'discrete_cai_values': [],  # 新增：离散序列的实际CAI值
-                # 新增：详细的轨迹数据
-                'rna_sequences': [],       # 每次迭代的概率分布
-                'discrete_sequences': [],  # 每次迭代的离散序列
-                'accessibility_values': [], # 每次迭代的accessibility值
-                'loss_values': [],          # 每次迭代的loss值
-                'amp_enabled': use_amp,    # 记录是否使用混合精度
-                # 延迟验证缓存
+                'discrete_cai_values': [],  # New: Actual CAI values for discrete sequences
+                # New: Detailed trajectory data
+                'rna_sequences': [],       # Probability distribution at each iteration
+                'discrete_sequences': [],  # Discrete sequence at each iteration
+                'accessibility_values': [], # Accessibility value at each iteration
+                'loss_values': [],          # Loss value at each iteration
+                'amp_enabled': use_amp,    # Record whether mixed precision is used
+                # Deferred validation cache
                 'deferred_sequences_cache': [] if enable_deferred_validation else None,
-                'amp_scale_growth': []     # 记录GradScaler的scale变化
+                'amp_scale_growth': []     # Record GradScaler scale changes
             }
 
-            # Parse variant for alpha and beta values (固定值，不退火)
+            # Parse variant for alpha and beta values (fixed values, no annealing)
             alpha = 0.1 if variant[0] == '1' else 0.0  # Gumbel noise
-            beta = 1.0 if variant[1] == '1' else 0.0   # 固定beta值：0=软概率, 1=STE
+            beta = 1.0 if variant[1] == '1' else 0.0   # Fixed beta value: 0=soft probability, 1=STE
 
             best_accessibility = float('inf')
             best_sequence = None
-            best_seq_design = None  # 完整的最佳设计信息
+            best_seq_design = None  # Complete best design information
 
             # Precompute UTR tensors once (optimization)
             utr5_tensor = self.string_to_one_hot_tensor(protein_info['utr5'])
             utr3_tensor = self.string_to_one_hot_tensor(protein_info['utr3'])
 
-            # 创建内层进度条（如果需要）
+            # Create inner progress bar (if needed)
             if show_progress:
                 pbar = tqdm(total=iterations, 
                            desc=f"Optimizing", 
@@ -256,10 +256,10 @@ class UnifiedExperimentRunner:
             for iteration in range(iterations):
                 optimizer.zero_grad()
 
-                # Beta值固定，不再退火（修正错误设计）
+                # Beta value is fixed, no annealing (correcting erroneous design)
 
                 if use_amp:
-                    # 全开模式 - 所有计算都用混合精度（包括beta=1）
+                    # Fully enabled mode - All computations use mixed precision (including beta=1)
                     with torch.cuda.amp.autocast():
                         # Forward pass through constraint (with precomputed UTR tensors)
                         result = self._forward_pass(
@@ -281,7 +281,7 @@ class UnifiedExperimentRunner:
                     scaler.step(optimizer)
                     scaler.update()
                 else:
-                    # 原始FP32模式
+                    # Original FP32 mode
                     # Forward pass through constraint (with precomputed UTR tensors)
                     result = self._forward_pass(
                         constraint, constraint_type, amino_acid_sequence,
@@ -292,7 +292,7 @@ class UnifiedExperimentRunner:
                     # Backward pass
                     total_loss = result['total_loss']
                     total_loss.backward()
-                    
+
                     # Gradient clipping if enabled (also for FP32)
                     if gradient_clip > 0:
                         torch.nn.utils.clip_grad_norm_(constraint.parameters(), gradient_clip)
@@ -316,8 +316,8 @@ class UnifiedExperimentRunner:
                         'scale': scaler.get_scale()
                     })
 
-                # Track best result - 只有满足约束的序列才能被记录为best
-                # 注意：迭代中的result没有amino_acids_match字段，需要实时验证
+                # Track best result - Only sequences satisfying constraints can be recorded as best
+                # Note: Result during iteration doesn't have amino_acids_match field, needs real-time validation
                 from id3.utils.sequence_utils import rna_to_amino_acids
                 discrete_seq = result.get('discrete_sequence', '')
                 if discrete_seq and len(discrete_seq) == len(amino_acid_sequence) * 3:
@@ -329,25 +329,25 @@ class UnifiedExperimentRunner:
                 if result['accessibility'] < best_accessibility and amino_acids_match:
                     best_accessibility = result['accessibility']
                     best_sequence = result['discrete_sequence']
-                    
-                    # 保存完整的最佳设计信息
+
+                    # Save complete best design information
                     best_seq_design = {
                         'accessibility': result['accessibility'],
                         'discrete_sequence': result['discrete_sequence'],
                         'iteration': iteration,
                         'timestamp': time.time() - start_time,
                     }
-                    
-                    # 如果启用了CAI，添加CAI相关信息
+
+                    # If CAI is enabled, add CAI-related information
                     if self.config.get('enable_cai', False) and 'loss_components' in result:
                         loss_components = result['loss_components']
-                        
-                        # ECAI值（连续优化目标）
+
+                        # ECAI value (continuous optimization target)
                         best_seq_design['ecai'] = loss_components.get('ecai_value', None)
                         if best_seq_design['ecai'] and isinstance(best_seq_design['ecai'], torch.Tensor):
                             best_seq_design['ecai'] = best_seq_design['ecai'].item()
-                        
-                        # 离散CAI值（实际序列的CAI）
+
+                        # Discrete CAI value (CAI of actual sequence)
                         if 'eval_cai' in loss_components:
                             best_seq_design['discrete_cai'] = loss_components['eval_cai']
                         elif 'discrete_cai' in loss_components:
@@ -359,18 +359,18 @@ class UnifiedExperimentRunner:
                         best_seq_design['cai_loss'] = loss_components.get('cai_loss', None)
                         if best_seq_design['cai_loss'] and isinstance(best_seq_design['cai_loss'], torch.Tensor):
                             best_seq_design['cai_loss'] = best_seq_design['cai_loss'].item()
-                    
-                    # 添加其他有用信息
+
+                    # Add other useful information
                     best_seq_design['total_loss'] = result['total_loss'].item()
-                
-                # 更新内层进度条
+
+                # Update inner progress bar
                 if show_progress:
                     postfix = {
                         'access': f"{result['accessibility']:.4f}",
                         'loss': f"{result['total_loss'].item():.4f}"
                     }
-                    
-                    # 如果启用了CAI，添加CAI信息
+
+                    # If CAI is enabled, add CAI information
                     if self.config.get('enable_cai', False) and 'loss_components' in result:
                         loss_components = result['loss_components']
                         if 'ecai_value' in loss_components:
@@ -378,24 +378,24 @@ class UnifiedExperimentRunner:
                     
                     pbar.set_postfix(postfix)
                     pbar.update(1)
-            
-            # 关闭内层进度条
+
+            # Close inner progress bar
             if show_progress:
                 pbar.close()
 
-            # 🚀 延迟验证批量处理 
+            # 🚀 Deferred validation batch processing
             if enable_deferred_validation:
-                # 检查是否为STE模式，STE模式不需要延迟验证
-                if beta == 0.0:  # 只有软概率模式才需要延迟验证
+                # Check if it's STE mode, STE mode doesn't need deferred validation
+                if beta == 0.0:  # Only soft probability mode needs deferred validation
                     self._process_deferred_discrete_validation(trajectory, protein_info)
                 else:
-                    logger.debug(f"跳过延迟验证：STE模式 (beta={beta}) 已经有正确的监控值")
+                    logger.debug(f"Skip deferred validation: STE mode (beta={beta}) already has correct monitoring values")
 
             # Final evaluation
             return self._prepare_final_result(
                 constraint, protein_info, amino_acid_sequence,
                 trajectory, best_accessibility, best_sequence,
-                best_seq_design,  # 新增参数
+                best_seq_design,  # New parameter
                 protein_name, constraint_type, variant, seed,
                 iterations, learning_rate, start_time
             )
@@ -422,10 +422,10 @@ class UnifiedExperimentRunner:
             result = constraint.forward(alpha=alpha, beta=beta, tau=1.0)
 
         # Get discrete sequence for validation
-        # 优化：直接从result中获取离散序列，避免重复调用
+        # Optimization: Get discrete sequence directly from result to avoid redundant calls
         discrete_sequence = result.get('discrete_sequence', '')
 
-        # 如果result中没有discrete_sequence（兼容旧版本约束类）
+        # If discrete_sequence is not in result (compatible with old constraint classes)
         if not discrete_sequence or len(discrete_sequence) != len(amino_acid_sequence) * 3:
             # Fallback: convert soft probabilities to discrete
             rna_sequence = result['rna_sequence']
@@ -470,15 +470,15 @@ class UnifiedExperimentRunner:
                 discrete=True  # Discrete mode when no soft probs available
             )
 
-        # 🔥 优化: 条件性离散监控 (延迟验证优化)
+        # 🔥 Optimization: Conditional discrete monitoring (deferred validation optimization)
         if enable_discrete_monitoring:
-            # 检查是否为STE模式 (beta=1)
+            # Check if it's STE mode (beta=1)
             if beta == 1.0:
-                # STE模式：两个路径应该数值一致，直接使用连续路径结果
+                # STE mode: Both paths should be numerically consistent, use continuous path result directly
                 accessibility = accessibility_loss.item()
-                logger.debug(f"STE模式: 使用连续路径结果 {accessibility:.6f}")
+                logger.debug(f"STE mode: Using continuous path result {accessibility:.6f}")
             else:
-                # 软概率模式：需要真正的离散验证
+                # Soft probability mode: Needs real discrete validation
                 with torch.no_grad():
                     full_rna_discrete = protein_info['utr5'] + discrete_sequence + protein_info['utr3']
                     full_rna_discrete_tensor = self.string_to_one_hot_tensor(full_rna_discrete)
@@ -489,26 +489,26 @@ class UnifiedExperimentRunner:
                     )
                     accessibility = accessibility_discrete.item() if isinstance(accessibility_discrete, torch.Tensor) else accessibility_discrete
         else:
-            # 优化模式: 延迟推理，暂时使用连续值
-            accessibility = accessibility_loss.item()  # 临时值
+            # Optimization mode: Deferred inference, temporarily use continuous value
+            accessibility = accessibility_loss.item()  # Temporary value
 
         # Compute unified loss
-        # 检查是否禁用约束惩罚（CAI no penalty模式）
+        # Check if constraint penalty is disabled (CAI no penalty mode)
         disable_constraint_penalty = self.config.get('disable_constraint_penalty', False)
         
         if constraint_type.lower() == 'lagrangian':
-            # 如果禁用约束惩罚，传递零惩罚
+            # If constraint penalty is disabled, pass zero penalty
             constraint_penalty_to_use = torch.zeros_like(result['constraint_penalty']) if disable_constraint_penalty else result['constraint_penalty']
             
             loss_components = constraint.compute_total_loss(
                 accessibility_loss,
                 constraint_penalty_to_use,
                 probabilities=result['probabilities'],
-                enhanced_sequence=result.get('enhanced_sequence'),  # 双路径架构支持
-                cai_metadata=result.get('cai_metadata')  # 🚀 FIX: 传递CAI元数据
+                enhanced_sequence=result.get('enhanced_sequence'),  # Dual-path architecture support
+                cai_metadata=result.get('cai_metadata')  # 🚀 FIX: Pass CAI metadata
             )
         else:
-            # 对于CPC，需要传递增强后的分布
+            # For CPC, need to pass enhanced distribution
             if constraint_type.lower() == 'cpc':
                 loss_components = constraint.compute_total_loss(
                     accessibility_loss,
@@ -527,9 +527,9 @@ class UnifiedExperimentRunner:
             'discrete_sequence': discrete_sequence,
             'constraint_penalty': result.get('constraint_penalty'),
             'loss_components': loss_components,
-            # 新增：确保返回rna_sequence用于轨迹保存
-            'rna_sequence': result.get('rna_sequence'),  # 软概率分布
-            # 延迟验证优化信息
+            # New: Ensure rna_sequence is returned for trajectory saving
+            'rna_sequence': result.get('rna_sequence'),  # Soft probability distribution
+            # Deferred validation optimization information
             'deferred_validation_enabled': not enable_discrete_monitoring,
             'full_rna_discrete': protein_info['utr5'] + discrete_sequence + protein_info['utr3'] if not enable_discrete_monitoring else None,
         }
@@ -541,14 +541,14 @@ class UnifiedExperimentRunner:
         trajectory['accessibility'].append(result['accessibility'])
         trajectory['unified_loss'].append(result['total_loss'].item())
 
-        # 新增：保存详细的轨迹数据
-        # 1. 保存概率分布 (rna_sequence)
+        # New: Save detailed trajectory data
+        # 1. Save probability distribution (rna_sequence)
         if 'rna_sequence' in result:
             rna_seq = result['rna_sequence']
             if isinstance(rna_seq, torch.Tensor):
-                # 转换为numpy并保存为列表
+                # Convert to numpy and save as list
                 rna_seq_np = rna_seq.detach().cpu().numpy()
-                if rna_seq_np.ndim > 2:  # 如果有batch维度，取第一个
+                if rna_seq_np.ndim > 2:  # If there's a batch dimension, take the first one
                     rna_seq_np = rna_seq_np[0]
                 trajectory['rna_sequences'].append(rna_seq_np.tolist())
             else:
@@ -556,17 +556,17 @@ class UnifiedExperimentRunner:
         else:
             trajectory['rna_sequences'].append(None)
 
-        # 2. 保存离散序列
+        # 2. Save discrete sequence
         if 'discrete_sequence' in result:
             trajectory['discrete_sequences'].append(result['discrete_sequence'])
         else:
             trajectory['discrete_sequences'].append(None)
 
-        # 3. accessibility已在第497行记录，无需重复
+        # 3. accessibility is already recorded at line 542, no need to repeat
 
-        # 4. loss已在第498行记录为unified_loss，无需重复
+        # 4. loss is already recorded as unified_loss at line 542, no need to repeat
 
-        # 5. 延迟验证缓存处理
+        # 5. Deferred validation cache processing
         if trajectory.get('deferred_sequences_cache') is not None and result.get('full_rna_discrete'):
             trajectory['deferred_sequences_cache'].append(result['full_rna_discrete'])
 
@@ -575,15 +575,15 @@ class UnifiedExperimentRunner:
             trajectory['cai_loss'].append(loss_components['cai_loss'].item())
             trajectory['ecai_values'].append(loss_components['ecai_value'].item())
 
-            # 记录离散序列的实际CAI值
+            # Record actual CAI values for discrete sequences
             if 'eval_cai' in loss_components:
-                # CPC/AMS 约束类型返回的 eval_cai
+                # eval_cai returned by CPC/AMS constraint types
                 trajectory['discrete_cai_values'].append(loss_components['eval_cai'])
             elif 'discrete_cai' in loss_components:
-                # 其他可能的命名
+                # Other possible naming
                 trajectory['discrete_cai_values'].append(loss_components['discrete_cai'])
             else:
-                # 如果没有提供，记录为 None 或计算
+                # If not provided, record as None or compute
                 trajectory['discrete_cai_values'].append(None)
         else:
             trajectory['cai_loss'].append(0.0)
@@ -598,31 +598,31 @@ class UnifiedExperimentRunner:
                   f"Loss={result['total_loss'].item():.4f}{cai_info}")
 
     def _process_deferred_discrete_validation(self, trajectory, protein_info):
-        """🚀 批量处理延迟的离散验证"""
-        
+        """🚀 Batch process deferred discrete validation"""
+
         sequences_cache = trajectory.get('deferred_sequences_cache')
         if not sequences_cache:
-            logger.warning("⚠️ 延迟验证缓存为空，跳过批量处理")
+            logger.warning("⚠️ Deferred validation cache is empty, skipping batch processing")
             return
+
+        logger.info(f"🔄 Starting batch inference for {len(sequences_cache)} discrete sequences...")
         
-        logger.info(f"🔄 开始批量推理 {len(sequences_cache)} 个离散序列...")
-        
-        batch_size = 32  # 可配置
+        batch_size = 32  # Configurable
         total_sequences = len(sequences_cache)
         batch_accessibilities = []
-        
+
         with torch.no_grad():
             for i in range(0, total_sequences, batch_size):
                 batch_end = min(i + batch_size, total_sequences)
                 batch_sequences = sequences_cache[i:batch_end]
-                
-                # 构建批量输入
+
+                # Build batch input
                 batch_tensors = []
                 for full_rna_seq in batch_sequences:
                     tensor = self.string_to_one_hot_tensor(full_rna_seq)
                     batch_tensors.append(tensor)
-                
-                # 批量推理
+
+                # Batch inference
                 if batch_tensors:
                     batch_input = torch.cat(batch_tensors, dim=0)
                     batch_results = self.deepraccess.compute_atg_window_accessibility(
@@ -630,22 +630,22 @@ class UnifiedExperimentRunner:
                         atg_position=len(protein_info['utr5']),
                         discrete=True
                     )
-                    
-                    # 转换为标量列表
+
+                    # Convert to scalar list
                     for result in batch_results:
                         acc_value = result.item() if isinstance(result, torch.Tensor) else result
                         batch_accessibilities.append(acc_value)
-        
-        # 更新trajectory中的accessibility值
+
+        # Update accessibility values in trajectory
         if len(batch_accessibilities) == len(trajectory['accessibility']):
             trajectory['accessibility'] = batch_accessibilities
-            logger.info(f"✅ 批量推理完成，更新了 {len(batch_accessibilities)} 个accessibility值")
+            logger.info(f"✅ Batch inference completed, updated {len(batch_accessibilities)} accessibility values")
         else:
-            logger.warning(f"⚠️ 批量推理数量不匹配: {len(batch_accessibilities)} vs {len(trajectory['accessibility'])}")
+            logger.warning(f"⚠️ Batch inference count mismatch: {len(batch_accessibilities)} vs {len(trajectory['accessibility'])}")
 
     def _prepare_final_result(self, constraint, protein_info, amino_acid_sequence,
                              trajectory, best_accessibility, best_sequence,
-                             best_seq_design,  # 新增参数
+                             best_seq_design,  # New parameter
                              protein_name, constraint_type, variant, seed,
                              iterations, learning_rate, start_time) -> Dict:
         """Prepare final experiment result."""
@@ -680,7 +680,7 @@ class UnifiedExperimentRunner:
             'final_accessibility': final_accessibility,
             'improvement': trajectory['accessibility'][0] - final_accessibility if trajectory['accessibility'] else 0.0,
             'best_accessibility': best_accessibility,
-            'best_seq_design': best_seq_design,  # 完整的最佳设计信息
+            'best_seq_design': best_seq_design,  # Complete best design information
 
             'amino_acids_match': amino_acids_match,
             'amino_acids_correct': 100.0 if amino_acids_match else 0.0,
@@ -696,7 +696,7 @@ class UnifiedExperimentRunner:
 
         # Add CAI-specific results
         if self.config.get('enable_cai', False) and trajectory['ecai_values']:
-            # 获取最终的离散CAI值用于判断是否达成目标
+            # Get final discrete CAI value to determine if target is achieved
             final_discrete_cai = None
             if trajectory['discrete_cai_values'] and trajectory['discrete_cai_values'][-1] is not None:
                 final_discrete_cai = trajectory['discrete_cai_values'][-1]
@@ -708,7 +708,7 @@ class UnifiedExperimentRunner:
                 'initial_ecai': trajectory['ecai_values'][0],
                 'ecai_improvement': trajectory['ecai_values'][-1] - trajectory['ecai_values'][0],
                 'final_discrete_cai': final_discrete_cai,
-                # 使用实际的离散CAI值来判断是否达成目标，而不是ECAI值
+                # Use actual discrete CAI value to determine if target is achieved, not ECAI value
                 'cai_target_achieved': final_discrete_cai >= self.config.get('cai_target', 0.8) if final_discrete_cai is not None else False
             })
 
@@ -716,8 +716,8 @@ class UnifiedExperimentRunner:
 
     def _load_existing_progress(self) -> set:
         """
-        加载已完成的实验ID集合。
-        
+        Load the set of completed experiment IDs.
+
         Returns:
             Set of completed experiment IDs
         """
@@ -728,32 +728,32 @@ class UnifiedExperimentRunner:
             try:
                 with open(progress_file, 'r') as f:
                     progress = json.load(f)
-                
-                # 提取已完成的实验ID
+
+                # Extract completed experiment IDs
                 for exp in progress.get('experiments', []):
                     if exp.get('status') == 'completed':
                         completed.add(exp['id'])
-                
+
                 if completed:
-                    logger.info(f"📂 从 {self.output_dir.name} 加载进度: 已完成 {len(completed)} 个实验")
-                    
+                    logger.info(f"📂 Loaded progress from {self.output_dir.name}: {len(completed)} experiments completed")
+
             except Exception as e:
-                logger.warning(f"⚠️ 无法加载进度文件: {e}")
+                logger.warning(f"⚠️ Unable to load progress file: {e}")
         
         return completed
     
     def _get_output_dir(self) -> Path:
         """
-        获取输出目录路径。
+        Get the output directory path.
 
         Returns:
             Path to output directory
         """
-        # 修复：从字典配置中获取output_dir
+        # Fix: Get output_dir from dictionary config
         if self.config.get('output_dir'):
             return Path(self.config['output_dir'])
 
-        # 修复：从字典配置中获取enable_cai并生成正确的模式名称
+        # Fix: Get enable_cai from dictionary config and generate correct mode name
         enable_cai = self.config.get('enable_cai', False)
         mode = 'unified_cai_experiments' if enable_cai else 'unified_access_experiments'
         if hasattr(self, '_output_timestamp'):
@@ -762,34 +762,34 @@ class UnifiedExperimentRunner:
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             self._output_timestamp = timestamp
 
-        # 时间戳放在开头
+        # Timestamp at the beginning
         return Path(f'results/{timestamp}_{mode}')
 
     def _init_or_update_progress_tracker(self, total_experiments: int, already_completed: int = 0) -> None:
         """
-        初始化或更新进度跟踪文件。
-        
+        Initialize or update progress tracking file.
+
         Args:
-            total_experiments: 总实验数量
-            already_completed: 已完成的实验数量
+            total_experiments: Total number of experiments
+            already_completed: Number of already completed experiments
         """
         progress_file = self.output_dir / 'progress.json'
-        
-        # 如果文件存在，保留原有数据
+
+        # If file exists, preserve existing data
         if progress_file.exists():
             try:
                 with open(progress_file, 'r') as f:
                     progress_data = json.load(f)
-                # 更新总数（可能用户改变了实验配置）
+                # Update total (user may have changed experiment configuration)
                 progress_data['total_experiments'] = total_experiments
                 progress_data['last_update'] = datetime.now().isoformat()
-                logger.info(f"📊 更新进度跟踪: {progress_file}")
+                logger.info(f"📊 Updated progress tracking: {progress_file}")
             except Exception as e:
-                logger.warning(f"⚠️ 无法读取进度文件，将创建新文件: {e}")
+                logger.warning(f"⚠️ Unable to read progress file, creating new one: {e}")
                 progress_data = self._create_new_progress_data(total_experiments, already_completed)
         else:
             progress_data = self._create_new_progress_data(total_experiments, already_completed)
-            logger.info(f"📊 初始化进度跟踪: {progress_file}")
+            logger.info(f"📊 Initialized progress tracking: {progress_file}")
         
         try:
             with open(progress_file, 'w') as f:
@@ -797,11 +797,11 @@ class UnifiedExperimentRunner:
                 f.flush()
                 os.fsync(f.fileno())
         except Exception as e:
-            logger.warning(f"⚠️ 无法创建进度文件: {str(e)}")
-    
+            logger.warning(f"⚠️ Unable to create progress file: {str(e)}")
+
     def _create_new_progress_data(self, total_experiments: int, already_completed: int = 0) -> dict:
         """
-        创建新的进度数据结构。
+        Create new progress data structure.
         """
         return {
             'start_time': datetime.now().isoformat(),
@@ -811,15 +811,15 @@ class UnifiedExperimentRunner:
             'current_experiment': None,
             'experiments': [],
             'last_update': datetime.now().isoformat(),
-            'version': '1.1'  # 添加版本号便于后续升级
+            'version': '1.1'  # Add version number for future upgrades
         }
-    
+
     def _init_progress_tracker(self, total_experiments: int) -> None:
         """
-        初始化进度跟踪文件（保留兼容性）。
-        
+        Initialize progress tracking file (for compatibility).
+
         Args:
-            total_experiments: 总实验数量
+            total_experiments: Total number of experiments
         """
         self._init_or_update_progress_tracker(total_experiments, 0)
         
@@ -828,31 +828,31 @@ class UnifiedExperimentRunner:
                 json.dump(progress_data, f, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
-            logger.info(f"📊 初始化进度跟踪: {progress_file}")
+            logger.info(f"📊 Initialized progress tracking: {progress_file}")
         except Exception as e:
-            logger.warning(f"⚠️ 无法创建进度文件: {str(e)}")
-    
-    def _update_progress(self, status: str, exp: dict, index: int, 
+            logger.warning(f"⚠️ Unable to create progress file: {str(e)}")
+
+    def _update_progress(self, status: str, exp: dict, index: int,
                         saved_path: Path = None, error: str = None) -> None:
         """
-        更新进度跟踪文件。
-        
+        Update progress tracking file.
+
         Args:
-            status: 实验状态 ('running', 'completed', 'failed')
-            exp: 实验配置字典
-            index: 当前实验索引
-            saved_path: 保存的文件路径（仅completed状态）
-            error: 错误信息（仅failed状态）
+            status: Experiment status ('running', 'completed', 'failed')
+            exp: Experiment configuration dictionary
+            index: Current experiment index
+            saved_path: Saved file path (completed status only)
+            error: Error message (failed status only)
         """
         progress_file = self.output_dir / 'progress.json'
         
         try:
-            # 读取现有进度数据
+            # Read existing progress data
             if progress_file.exists():
                 with open(progress_file, 'r') as f:
                     progress_data = json.load(f)
             else:
-                # 如果文件不存在，创建新的
+                # If file doesn't exist, create new one
                 progress_data = {
                     'start_time': datetime.now().isoformat(),
                     'total_experiments': 0,
@@ -891,51 +891,51 @@ class UnifiedExperimentRunner:
                     'error': error,
                     'timestamp': datetime.now().isoformat()
                 })
-            
+
             progress_data['last_update'] = datetime.now().isoformat()
-            
-            # 计算进度百分比
+
+            # Calculate progress percentage
             total = progress_data.get('total_experiments', 0)
             if total > 0:
                 completed = progress_data['completed_experiments']
                 failed = progress_data['failed_experiments']
                 progress_pct = ((completed + failed) / total) * 100
                 progress_data['progress_percentage'] = round(progress_pct, 2)
-            
-            # 原子写入（写入临时文件后重命名）
+
+            # Atomic write (write to temp file then rename)
             temp_file = progress_file.with_suffix('.tmp')
             with open(temp_file, 'w') as f:
                 json.dump(progress_data, f, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
-            
-            # 原子替换
+
+            # Atomic replacement
             temp_file.replace(progress_file)
-            
+
             if self.config.get('verbose', False):
-                logger.debug(f"📊 更新进度: {exp_id} - {status}")
-                
+                logger.debug(f"📊 Updated progress: {exp_id} - {status}")
+
         except Exception as e:
-            logger.warning(f"⚠️ 无法更新进度文件: {str(e)}")
+            logger.warning(f"⚠️ Unable to update progress file: {str(e)}")
 
     def _save_experiment_result(self, result: dict) -> Path:
         """
-        增量保存单个实验结果，确保立即写入磁盘。
+        Incrementally save individual experiment result, ensuring immediate disk write.
 
         Args:
-            result: 实验结果字典
+            result: Experiment result dictionary
 
         Returns:
-            保存的文件路径
+            Path to saved file
         """
-        # 生成文件名：时间戳_蛋白质_约束_变体_种子.json
+        # Generate filename: timestamp_protein_constraint_variant_seed.json
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         filename = (f"{timestamp}_{result['protein_name']}_{result['constraint_type']}_"
                    f"{result['variant']}_seed{result['seed']}.json")
 
         file_path = self.output_dir / filename
 
-        # 序列化numpy数组
+        # Serialize numpy arrays
         def serialize_numpy(obj):
             if isinstance(obj, np.ndarray):
                 return obj.tolist()
@@ -945,40 +945,40 @@ class UnifiedExperimentRunner:
                 return int(obj)
             raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
-        # 保存结果并立即刷新到磁盘
+        # Save result and immediately flush to disk
         try:
             with open(file_path, 'w') as f:
                 json.dump(result, f, indent=2, default=serialize_numpy)
-                f.flush()  # 立即刷新缓冲区
-                os.fsync(f.fileno())  # 强制写入磁盘
-            
-            # 提供更详细的保存信息
+                f.flush()  # Immediately flush buffer
+                os.fsync(f.fileno())  # Force write to disk
+
+            # Provide more detailed save information
             exp_id = f"{result['protein_name']}-{result['constraint_type']}-{result['variant']}-{result['seed']}"
-            logger.info(f"✅ 保存实验结果: {filename} | Accessibility: {result.get('final_accessibility', 'N/A'):.4f}")
-            
+            logger.info(f"✅ Saved experiment result: {filename} | Accessibility: {result.get('final_accessibility', 'N/A'):.4f}")
+
         except Exception as e:
-            logger.error(f"❌ 保存实验结果失败: {filename} - {str(e)}")
+            logger.error(f"❌ Failed to save experiment result: {filename} - {str(e)}")
             raise
 
         return file_path
 
     def run_batch(self, experiments: list, num_workers: int = None) -> list:
         """
-        Run a batch of experiments with serial execution (最优性能).
-        
-        基于性能测试结果，串行执行比并行快2-5倍，因此始终使用串行模式。
+        Run a batch of experiments with serial execution (optimal performance).
+
+        Based on performance test results, serial execution is 2-5x faster than parallel, so always use serial mode.
 
         Args:
             experiments: List of experiment specifications
-            num_workers: 忽略此参数，始终串行执行
+            num_workers: Ignored parameter, always use serial execution
 
         Returns:
             List of experiment results
         """
-        logger.info(f"🚀 串行执行 {len(experiments)} 个实验（性能最优模式）")
-        logger.info(f"💡 性能测试显示：串行比并行快2-5倍")
-        
-        # 直接调用串行执行方法
+        logger.info(f"🚀 Serial execution of {len(experiments)} experiments (optimal performance mode)")
+        logger.info(f"💡 Performance tests show: Serial is 2-5x faster than parallel")
+
+        # Directly call serial execution method
         return self._run_batch_sequential(experiments)
 
     def _run_batch_sequential(self, experiments: list) -> list:
@@ -987,32 +987,32 @@ class UnifiedExperimentRunner:
         Supports resuming from previous runs.
         """
         results = []
-        
-        # 过滤已完成的实验
+
+        # Filter completed experiments
         experiments_to_run = []
         skipped_count = 0
-        
+
         for exp in experiments:
             exp_id = f"{exp['protein_name']}-{exp['constraint_type']}-{exp['variant']}-{exp['seed']}"
             if exp_id in self.completed_experiments:
                 skipped_count += 1
-                logger.debug(f"跳过已完成的实验: {exp_id}")
+                logger.debug(f"Skipping completed experiment: {exp_id}")
             else:
                 experiments_to_run.append(exp)
-        
+
         if skipped_count > 0:
-            logger.info(f"⏭️  跳过 {skipped_count} 个已完成的实验")
-            logger.info(f"🚀 将运行 {len(experiments_to_run)} 个剩余实验")
-        
+            logger.info(f"⏭️  Skipped {skipped_count} completed experiments")
+            logger.info(f"🚀 Will run {len(experiments_to_run)} remaining experiments")
+
         if not experiments_to_run:
-            logger.info("✅ 所有实验都已完成！")
+            logger.info("✅ All experiments are already completed!")
             return results
-        
-        # 初始化或更新进度跟踪
+
+        # Initialize or update progress tracking
         self._init_or_update_progress_tracker(len(experiments), len(self.completed_experiments))
-        
-        # 外层进度条 - 实验进度
-        # 计算总实验数（包括已完成的）
+
+        # Outer progress bar - experiment progress
+        # Calculate total number of experiments (including completed ones)
         total_experiments = len(experiments)
         
         with tqdm(total=len(experiments_to_run), 
@@ -1025,57 +1025,57 @@ class UnifiedExperimentRunner:
             
             for i, exp in enumerate(experiments_to_run, 1):
                 exp_id = f"{exp['protein_name']}-{exp['constraint_type']}-{exp['variant']}-{exp['seed']}"
-                
-                # 计算实际的实验索引（包括已跳过的）
+
+                # Calculate actual experiment index (including skipped ones)
                 actual_index = i + skipped_count
-                
-                # 更新进度条描述
+
+                # Update progress bar description
                 pbar_experiments.set_description(f"Exp: {exp_id} [{actual_index}/{total_experiments}]")
-                
-                # 更新进度：开始实验
+
+                # Update progress: starting experiment
                 self._update_progress('running', exp, actual_index)
-                
-                # 运行单个实验（传递show_progress参数以启用内层进度条）
+
+                # Run single experiment (pass show_progress parameter to enable inner progress bar)
                 result = self.run_single_experiment(
                     protein_name=exp['protein_name'],
                     constraint_type=exp['constraint_type'],
                     variant=exp['variant'],
                     seed=exp['seed'],
-                    show_progress=not (self.config.get('disable_inner_tqdm', False) if isinstance(self.config, dict) else getattr(self.config, 'disable_inner_tqdm', False))  # 根据配置决定是否启用内层进度条
+                    show_progress=not (self.config.get('disable_inner_tqdm', False) if isinstance(self.config, dict) else getattr(self.config, 'disable_inner_tqdm', False))  # Determine whether to enable inner progress bar based on configuration
                 )
 
-                # 增量保存实验结果
+                # Incrementally save experiment result
                 if result.get('status') == 'completed':
                     saved_path = self._save_experiment_result(result)
-                    
-                    # 更新进度：实验完成
+
+                    # Update progress: experiment completed
                     self._update_progress('completed', exp, actual_index, saved_path=saved_path)
-                    
-                    # 更新外层进度条的后缀信息
+
+                    # Update outer progress bar suffix information
                     postfix = {
                         'access': f"{result['final_accessibility']:.4f}",
                         'AA': f"{result['amino_acids_correct']:.0f}%"
                     }
-                    
-                    # 如果启用了CAI，添加CAI信息
+
+                    # If CAI is enabled, add CAI information
                     if self.config.get('enable_cai', False) and 'final_ecai' in result:
                         postfix['CAI'] = f"{result['final_ecai']:.4f}"
                         if result.get('cai_target_achieved', False):
                             postfix['CAI'] += "✓"
-                    
+
                     pbar_experiments.set_postfix(postfix)
                 else:
-                    # 更新进度：实验失败
+                    # Update progress: experiment failed
                     self._update_progress('failed', exp, actual_index, error=result.get('error', 'Unknown error'))
-                    
-                    # 实验失败时显示错误
+
+                    # Display error when experiment fails
                     pbar_experiments.set_postfix({'status': 'FAILED'})
                     tqdm.write(f"❌ Failed: {exp_id} - {result.get('error', 'Unknown error')}")
 
                 results.append(result)
                 pbar_experiments.update(1)
 
-        logger.info(f"💾 所有实验结果已保存到: {self.output_dir}")
-        logger.info(f"📊 进度跟踪文件: {self.output_dir / 'progress.json'}")
-        
+        logger.info(f"💾 All experiment results saved to: {self.output_dir}")
+        logger.info(f"📊 Progress tracking file: {self.output_dir / 'progress.json'}")
+
         return results

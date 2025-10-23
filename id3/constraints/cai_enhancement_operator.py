@@ -138,21 +138,21 @@ class CAIEnhancementOperator:
                              target_cai: float,
                              **kwargs) -> Tuple[torch.Tensor, Dict]:
         """
-        应用CAI增强操作符 Ψ_{π→τ}
-        
-        这是论文中Ψ_{π→τ}操作符的主要入口点。
-        根据初始化时选择的方法，路由到相应的优化器。
-        
+        Apply CAI enhancement operator Ψ_{π→τ}
+
+        This is the main entry point for the Ψ_{π→τ} operator from the paper.
+        Routes to the appropriate optimizer based on the method selected during initialization.
+
         Args:
-            pi_accessibility: 可及性优化的分布 π
-            amino_acid_sequence: 目标氨基酸序列
-            valid_codon_mask: 有效密码子掩码
-            codon_indices: 密码子索引（某些优化器可能忽略）
-            target_cai: 目标CAI值 τ_CAI
-            **kwargs: 其他方法特定的参数
-            
+            pi_accessibility: Accessibility-optimized distribution π
+            amino_acid_sequence: Target amino acid sequence
+            valid_codon_mask: Valid codon mask
+            codon_indices: Codon indices (may be ignored by some optimizers)
+            target_cai: Target CAI value τ_CAI
+            **kwargs: Other method-specific parameters
+
         Returns:
-            Tuple of (离散分布, 元数据字典)
+            Tuple of (discrete distribution, metadata dictionary)
         """
 
         if self.method == 'sado':
@@ -191,20 +191,20 @@ class CAIEnhancementOperator:
         
         return discrete_distribution, metadata
     
-    def enhance(self, 
+    def enhance(self,
                 pi_accessibility: torch.Tensor,
                 target_cai: float = 0.8,
                 **kwargs) -> Tuple[torch.Tensor, Dict]:
         """
-        简化的增强接口（向后兼容）
-        
+        Simplified enhancement interface (backward compatible)
+
         Args:
-            pi_accessibility: 可及性优化的分布
-            target_cai: 目标CAI值
-            **kwargs: 其他参数
-            
+            pi_accessibility: Accessibility-optimized distribution
+            target_cai: Target CAI value
+            **kwargs: Other parameters
+
         Returns:
-            Tuple of (优化后的分布, 元数据)
+            Tuple of (optimized distribution, metadata)
         """
         return self.optimizer.optimize(
             pi_accessibility=pi_accessibility,
@@ -214,9 +214,10 @@ class CAIEnhancementOperator:
     
     def reset(self):
         """
-        重置优化器状态
-        
-        某些优化器（如SADO）维护内部状态，需要在新的优化序列开始时重置。
+        Reset optimizer state
+
+        Some optimizers (such as SADO) maintain internal state that needs to be reset
+        when starting a new optimization sequence.
         """
         if hasattr(self.optimizer, 'reset'):
             self.optimizer.reset()
@@ -224,10 +225,10 @@ class CAIEnhancementOperator:
     
     def get_statistics(self) -> Dict[str, Any]:
         """
-        获取优化器的性能统计
-        
+        Get optimizer performance statistics
+
         Returns:
-            包含性能指标的字典
+            Dictionary containing performance metrics
         """
         stats = {
             'method': self.method,
@@ -248,10 +249,10 @@ class CAIEnhancementOperator:
     
     def switch_method(self, new_method: str):
         """
-        动态切换优化方法
-        
+        Dynamically switch optimization method
+
         Args:
-            new_method: 新的优化方法名称
+            new_method: New optimization method name
         """
         if new_method not in self.OPTIMIZERS:
             raise ValueError(f"Unknown method: {new_method}")
@@ -273,7 +274,7 @@ class CAIEnhancementOperator:
 
     
     def _load_or_compute_amino_acid_cache(self, amino_acid_sequence: str):
-        """向后兼容：加载或计算氨基酸序列缓存"""
+        """Backward compatible: load or compute amino acid sequence cache"""
         if hasattr(self.optimizer, '_load_or_compute_amino_acid_cache'):
             self.optimizer._load_or_compute_amino_acid_cache(amino_acid_sequence)
             self._sync_cache_state()
@@ -284,7 +285,7 @@ class CAIEnhancementOperator:
             self.optimizer._precompute_amino_acid_weights()
     
     def discretize_distribution(self, distribution: torch.Tensor, valid_mask: torch.Tensor) -> torch.Tensor:
-        """向后兼容：离散化分布"""
+        """Backward compatible: discretize distribution"""
         from id3.optimizers.cai.utils import discretize_distribution
         return discretize_distribution(distribution, valid_mask)
     
@@ -303,7 +304,7 @@ class CAIEnhancementOperator:
                                  dist1: torch.Tensor,
                                  dist2: torch.Tensor,
                                  gamma: float) -> torch.Tensor:
-        """向后兼容：分布插值"""
+        """Backward compatible: distribution interpolation"""
         from id3.optimizers.cai.utils import interpolate_distributions
         return interpolate_distributions(dist1, dist2, gamma)
     

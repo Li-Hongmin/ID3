@@ -1,6 +1,8 @@
 """
+Memory Utilities
 
-
+Provides memory monitoring, optimization, and management tools for
+efficient tensor operations and memory usage tracking.
 """
 
 import torch
@@ -14,14 +16,14 @@ import warnings
 
 
 class MemoryMonitor:
+    """Monitor memory usage for CPU and GPU"""
 
-    
     def __init__(self):
         self.gpu_available = torch.cuda.is_available()
         self.reset_stats()
-    
+
     def reset_stats(self):
-        """重置统计信息"""
+        """Reset statistics"""
         self.peak_memory = 0
         self.initial_memory = self.get_current_memory()
     
@@ -47,7 +49,7 @@ class MemoryMonitor:
         return memory_info
     
     def get_peak_memory(self) -> Dict[str, float]:
-        """获取峰值内存使用"""
+        """Get peak memory usage"""
         current = self.get_current_memory()
         
         if self.gpu_available:
@@ -72,7 +74,7 @@ class MemoryMonitor:
 
 @contextmanager
 def memory_efficient_context():
-    """内存高效上下文管理器"""
+    """Memory-efficient context manager"""
 
     torch.cuda.empty_cache() if torch.cuda.is_available() else None
     gc.collect()
@@ -114,34 +116,34 @@ def memory_efficient_decorator(cleanup_after: bool = True):
 
 
 class BatchProcessor:
+    """Process data in batches to manage memory usage"""
 
-    
     def __init__(self, batch_size: int, max_memory_mb: float = 1000):
         """
-        初始化批处理器
-        
+        Initialize batch processor
+
         Args:
-            batch_size: 批次大小
-            max_memory_mb: 最大内存使用限制 (MB)
+            batch_size: Batch size
+            max_memory_mb: Maximum memory usage limit (MB)
         """
         self.batch_size = batch_size
         self.max_memory_mb = max_memory_mb
         self.monitor = MemoryMonitor()
     
-    def process_in_batches(self, 
-                          data: Union[List, torch.Tensor], 
+    def process_in_batches(self,
+                          data: Union[List, torch.Tensor],
                           process_func: Callable,
                           combine_func: Optional[Callable] = None) -> Any:
         """
-        分批处理数据
-        
+        Process data in batches
+
         Args:
-            data: 要处理的数据
-            process_func: 处理函数
-            combine_func: 结果合并函数 (默认使用torch.cat)
-            
+            data: Data to process
+            process_func: Processing function
+            combine_func: Result combination function (default: torch.cat)
+
         Returns:
-            处理后的结果
+            Processed results
         """
         if isinstance(data, torch.Tensor):
             total_size = data.shape[0]
@@ -178,7 +180,7 @@ class BatchProcessor:
 
 
 class TensorCache:
-    """张量缓存管理器"""
+    """Tensor cache manager"""
     
     def __init__(self, max_cache_size_mb: float = 500):
         """
@@ -200,7 +202,7 @@ class TensorCache:
         return None
     
     def set(self, key: str, tensor: torch.Tensor) -> bool:
-        """设置缓存张量"""
+        """Set cached tensor"""
 
         tensor_size = tensor.numel() * tensor.element_size() / 1024 / 1024
         
@@ -232,7 +234,7 @@ class TensorCache:
                 break
     
     def clear(self):
-        """清空缓存"""
+        """Clear cache"""
         self.cache.clear()
         self.cache_sizes.clear()
         self.access_count.clear()
@@ -245,18 +247,18 @@ class MemoryOptimizer:
         self.monitor = MemoryMonitor()
         self.tensor_cache = TensorCache()
     
-    def optimize_tensor_operations(self, 
+    def optimize_tensor_operations(self,
                                  tensors: List[torch.Tensor],
                                  operations: List[str] = None) -> List[torch.Tensor]:
         """
-        优化张量操作的内存使用
-        
+        Optimize memory usage for tensor operations
+
         Args:
-            tensors: 张量列表
-            operations: 操作列表 (可选)
-            
+            tensors: List of tensors
+            operations: List of operations (optional)
+
         Returns:
-            优化后的张量列表
+            List of optimized tensors
         """
         optimized = []
         
@@ -280,7 +282,7 @@ class MemoryOptimizer:
     
     @contextmanager
     def no_grad_inference(self):
-        """推理模式上下文管理器"""
+        """Inference mode context manager"""
         with torch.no_grad():
 
             torch.backends.cudnn.benchmark = True
@@ -337,7 +339,7 @@ def get_memory_optimizer() -> MemoryOptimizer:
 
 
 def print_memory_summary(prefix: str = ""):
-    """打印内存摘要"""
+    """Print memory summary"""
     monitor = MemoryMonitor()
     monitor.print_memory_stats(prefix)
 

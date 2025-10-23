@@ -104,23 +104,23 @@ class ECAIComputation:
         Returns:
             ECAI value [batch_size] or scalar if batch_size=1
         """
-        # 输入验证：检查codon_probs是否为空或形状错误
+        # Input validation: check if codon_probs is empty or has incorrect shape
         if codon_probs is None or codon_probs.numel() == 0:
-            logger.warning(f"codon_probs为空或None: {codon_probs}")
+            logger.warning(f"codon_probs is empty or None: {codon_probs}")
             return torch.tensor(0.0, device=codon_probs.device if codon_probs is not None else 'cpu')
-        
+
         if codon_probs.dim() == 0:
-            logger.warning(f"codon_probs维度为0: {codon_probs.shape}")
+            logger.warning(f"codon_probs has 0 dimensions: {codon_probs.shape}")
             return torch.tensor(0.0, device=codon_probs.device)
-        
+
         if codon_probs.dim() == 2:
             codon_probs = codon_probs.unsqueeze(0)
             squeeze_output = True
         else:
             squeeze_output = False
-        
+
         if codon_probs.dim() != 3:
-            logger.error(f"codon_probs维度错误，期望3维，实际{codon_probs.dim()}维，形状：{codon_probs.shape}")
+            logger.error(f"codon_probs dimension error, expected 3D, actual {codon_probs.dim()}D, shape: {codon_probs.shape}")
             return torch.tensor(0.0, device=codon_probs.device)
         
         batch_size, num_positions, max_codons = codon_probs.shape

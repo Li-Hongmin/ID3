@@ -15,9 +15,30 @@ echo ""
 
 # Configuration
 PROTEIN_ARG="${1:-MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG}"
-CONSTRAINT="${2:-lagrangian}"
+CONSTRAINT_INPUT="${2:-lagrangian}"
 ITERATIONS="${3:-100}"
 OUTPUT_DIR="case_study_results"
+
+# Map constraint abbreviations to full names
+case "$CONSTRAINT_INPUT" in
+    lag|lagrangian)
+        CONSTRAINT="lagrangian"
+        CONSTRAINT_SHORT="lag"
+        ;;
+    ams|amino_matching)
+        CONSTRAINT="amino_matching"
+        CONSTRAINT_SHORT="ams"
+        ;;
+    cpc|codon_profile)
+        CONSTRAINT="codon_profile"
+        CONSTRAINT_SHORT="cpc"
+        ;;
+    *)
+        echo "❌ Error: Unknown constraint '$CONSTRAINT_INPUT'"
+        echo "Valid options: lagrangian (lag), amino_matching (ams), codon_profile (cpc)"
+        exit 1
+        ;;
+esac
 
 mkdir -p "$OUTPUT_DIR"
 

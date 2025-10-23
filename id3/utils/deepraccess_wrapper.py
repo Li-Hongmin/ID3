@@ -420,9 +420,6 @@ def load_deepraccess_model(model_path: str = None, device: str = 'auto') -> Deep
         default_paths = [
             os.path.join(base_dir, 'DeepRaccess/path/FCN_structured.pth'),
             os.path.join(base_dir, 'DeepRaccess/path/FCN_uniform.pth'),
-            # HPC cluster paths
-            '/work/gg53/d58004/Degradation/DeepRaccess/path/FCN_structured.pth',
-            '/work/gg53/d58004/Degradation/DeepRaccess/path/FCN_uniform.pth',
         ]
         
         for path in default_paths:

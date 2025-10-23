@@ -16,7 +16,7 @@ echo ""
 # Configuration
 PROTEIN_ARG="${1:-MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG}"
 CONSTRAINT_INPUT="${2:-lagrangian}"
-ITERATIONS="${3:-100}"
+ITERATIONS_ARG="${3}"  # Optional, will auto-calculate if not provided
 OUTPUT_DIR="case_study_results"
 
 # Map constraint abbreviations to full names
@@ -42,32 +42,62 @@ esac
 
 mkdir -p "$OUTPUT_DIR"
 
-# Check if protein is a file or sequence
+# Check if protein is a file or sequence and get protein length
 if [ -f "$PROTEIN_ARG" ]; then
     PROTEIN_FILE="$PROTEIN_ARG"
     PROTEIN_NAME=$(basename "$PROTEIN_FILE" .fasta.txt)
-    echo "Configuration:"
-    echo "  Protein file: $PROTEIN_FILE"
-    echo "  Constraint: $CONSTRAINT"
-    echo "  Iterations: $ITERATIONS"
-    echo "  Output: $OUTPUT_DIR/"
+    PROTEIN_SEQ=$(grep -v "^>" "$PROTEIN_FILE" | tr -d '\n')
+    PROTEIN_LENGTH=${#PROTEIN_SEQ}
 elif [ -f "data/proteins/$PROTEIN_ARG.fasta.txt" ]; then
     PROTEIN_FILE="data/proteins/$PROTEIN_ARG.fasta.txt"
     PROTEIN_NAME="$PROTEIN_ARG"
-    echo "Configuration:"
-    echo "  Protein: $PROTEIN_NAME (from data/proteins/)"
-    echo "  Constraint: $CONSTRAINT"
-    echo "  Iterations: $ITERATIONS"
-    echo "  Output: $OUTPUT_DIR/"
+    PROTEIN_SEQ=$(grep -v "^>" "$PROTEIN_FILE" | tr -d '\n')
+    PROTEIN_LENGTH=${#PROTEIN_SEQ}
 else
     PROTEIN_FILE=""
     PROTEIN_NAME="custom"
-    echo "Configuration:"
-    echo "  Protein sequence: $PROTEIN_ARG"
-    echo "  Constraint: $CONSTRAINT"
-    echo "  Iterations: $ITERATIONS"
-    echo "  Output: $OUTPUT_DIR/"
+    PROTEIN_SEQ="$PROTEIN_ARG"
+    PROTEIN_LENGTH=${#PROTEIN_SEQ}
 fi
+
+# Auto-calculate iterations if not provided
+if [ -z "$ITERATIONS_ARG" ]; then
+    # Adaptive iteration calculation based on protein length and constraint
+    if [ $PROTEIN_LENGTH -le 20 ]; then
+        BASE_ITERATIONS=50
+    elif [ $PROTEIN_LENGTH -le 50 ]; then
+        BASE_ITERATIONS=100
+    elif [ $PROTEIN_LENGTH -le 100 ]; then
+        BASE_ITERATIONS=200
+    elif [ $PROTEIN_LENGTH -le 200 ]; then
+        BASE_ITERATIONS=300
+    else
+        BASE_ITERATIONS=500
+    fi
+
+    # Adjust for constraint type (AMS/CPC typically converge faster)
+    if [ "$CONSTRAINT" = "amino_matching" ] || [ "$CONSTRAINT" = "codon_profile" ]; then
+        ITERATIONS=$((BASE_ITERATIONS * 3 / 4))
+    else
+        ITERATIONS=$BASE_ITERATIONS
+    fi
+
+    AUTO_ITERATIONS="(auto-calculated)"
+else
+    ITERATIONS=$ITERATIONS_ARG
+    AUTO_ITERATIONS=""
+fi
+
+# Display configuration
+echo "Configuration:"
+if [ -n "$PROTEIN_FILE" ]; then
+    echo "  Protein: $PROTEIN_NAME (${PROTEIN_LENGTH} amino acids)"
+else
+    echo "  Protein sequence: ${PROTEIN_SEQ:0:30}... (${PROTEIN_LENGTH} amino acids)"
+fi
+echo "  Constraint: $CONSTRAINT ($CONSTRAINT_SHORT)"
+echo "  Iterations: $ITERATIONS $AUTO_ITERATIONS"
+echo "  Output: $OUTPUT_DIR/"
 
 echo ""
 

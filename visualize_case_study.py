@@ -166,10 +166,13 @@ def generate_visualization(json_file, output_file=None):
 
     # Process probability data
     num_positions = min(45, len(final_sequence))  # First 45 positions
-    num_steps_to_show = 200
+    total_steps = len(discrete_sequences)
+    max_iterations = iterations[-1] if iterations else total_steps
+
+    # Use all steps (or max 1000 for performance)
+    num_steps_to_show = min(total_steps, 1000)
 
     # Sample steps evenly across trajectory
-    total_steps = len(discrete_sequences)
     step_indices = np.linspace(0, total_steps-1, num_steps_to_show, dtype=int)
 
     # Initialize probability matrix (4 nucleotides x positions x steps)
@@ -221,21 +224,22 @@ def generate_visualization(json_file, output_file=None):
                 intensity = np.max(probs)
                 rgb_image[pos, step_idx, :] = weighted_color * (0.5 + 0.5 * intensity)
 
-    # Display RGB image
+    # Display RGB image (extent based on actual iterations)
     ax_top.imshow(rgb_image, aspect='auto', origin='lower',
-                 extent=[0, 1000, 0, num_positions], interpolation='nearest')
+                 extent=[0, max_iterations, 0, num_positions], interpolation='nearest')
 
     # Add codon boundaries (every 3 nucleotides)
     for pos in range(3, num_positions, 3):
         ax_top.axhline(y=pos-0.5, color='black', linewidth=0.8, alpha=0.4)
 
-    # Add vertical lines for major step intervals
-    for step in range(0, 1001, 200):
+    # Add vertical lines for major step intervals (adaptive)
+    step_interval = max(50, max_iterations // 5)
+    for step in range(0, max_iterations + 1, step_interval):
         ax_top.axvline(x=step, color='gray', linewidth=0.3, alpha=0.3)
 
     # Formatting
     ax_top.set_ylabel('Top 45 Positions', fontsize=11, fontweight='bold')
-    ax_top.set_xlim(0, 1000)
+    ax_top.set_xlim(0, max_iterations)
     ax_top.set_ylim(0, num_positions)
     ax_top.set_title('Nucleotide Evolution', fontsize=12, fontweight='bold')
 

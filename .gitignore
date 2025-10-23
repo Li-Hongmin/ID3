@@ -49,6 +49,7 @@ checkpoints/
 # Data and results
 results/
 outputs/
+case_study_results/
 logs/
 *.log
 

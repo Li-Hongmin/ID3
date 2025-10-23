@@ -322,7 +322,52 @@ def run_accessibility_optimization(args):
         output_content += f"# CAI: {final_cai:.4f}\n"
         output_content += f"{final_discrete}\n"
         output_file.write_text(output_content)
-        print(f"\n✓ Saved to: {args.output}")
+        print(f"\n✓ Saved sequence to: {args.output}")
+
+    # Save detailed results if requested
+    if args.save_result:
+        import json
+        from datetime import datetime
+
+        result_data = {
+            'protein_name': protein_seq[:20] if len(protein_seq) > 20 else protein_seq,
+            'protein_length': len(protein_seq),
+            'constraint_type': args.constraint,
+            'variant': f"{int(args.alpha > 0)}{int(args.beta > 0)}",
+            'seed': 42,  # Default seed
+            'configuration': {
+                'iterations': args.iterations,
+                'learning_rate': args.learning_rate,
+                'cai_target': args.cai_target,
+                'cai_weight': args.cai_weight,
+                'alpha': args.alpha,
+                'beta': args.beta,
+                'device': str(args.device)
+            },
+            'final_accessibility': final_accessibility,
+            'best_accessibility': min(history['accessibility']) if history['accessibility'] else final_accessibility,
+            'improvement': (history['accessibility'][0] - min(history['accessibility'])) / history['accessibility'][0] if history['accessibility'] else 0,
+            'final_cai': final_cai,
+            'best_seq_design': {
+                'discrete_sequence': final_discrete,
+                'accessibility': final_accessibility,
+                'cai': final_cai
+            },
+            'trajectory': {
+                'iterations': list(range(len(history['total_loss']))),
+                'accessibility': history['accessibility'],
+                'unified_loss': history['total_loss'],
+                'discrete_cai_values': history['cai'],
+                'ecai_values': history['cai'],
+                'loss_values': history['total_loss']
+            },
+            'timestamp': datetime.now().isoformat()
+        }
+
+        result_file = Path(args.save_result)
+        with open(result_file, 'w') as f:
+            json.dump(result_data, f, indent=2)
+        print(f"✓ Saved detailed results to: {args.save_result}")
 
     print("\n" + "="*70)
     print("✅ Demo Complete!")
@@ -458,7 +503,13 @@ Note: First run will prompt to auto-install DeepRaccess if not found
     parser.add_argument(
         '--output', '-o',
         type=str,
-        help='Output file for optimized RNA sequence'
+        help='Output file for optimized RNA sequence (FASTA format)'
+    )
+
+    parser.add_argument(
+        '--save-result',
+        type=str,
+        help='Save detailed optimization results to JSON file (for visualization)'
     )
 
     parser.add_argument(

@@ -127,10 +127,33 @@ Both tools optimize:
 - **CAI optimization** (Codon Adaptation Index)
 - **RNA accessibility** (DeepRaccess prediction)
 
+### Case Study Example
+
+Run complete optimization with automatic visualization:
+
+```bash
+# Quick case study (20 iterations)
+bash run_case_study.sh MSKGEELFT lagrangian 20
+
+# Full case study (100 iterations)
+bash run_case_study.sh MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG lagrangian 100
+
+# Try different constraints
+bash run_case_study.sh MSKGEELFT amino_matching 50
+bash run_case_study.sh MSKGEELFT codon_profile 50
+```
+
+Outputs:
+- `case_study_results/optimized_sequence.fasta` - Optimized mRNA
+- `case_study_results/optimization_result.json` - Detailed data
+- `case_study_results/*_convergence.png` - Convergence curves
+- `case_study_results/*_sequence.png` - Sequence analysis
+
 ### Help
 ```bash
 python demo.py --help                      # Demo options
 python run_unified_experiment.py --help    # Experiment options
+python visualize_results.py --help         # Visualization options
 ```
 
 ## Repository Structure

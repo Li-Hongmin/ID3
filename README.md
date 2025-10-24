@@ -301,16 +301,6 @@ python demo.py --constraint amino_matching
 python demo.py --constraint codon_profile
 ```
 
-## Expected Performance
-
-Production settings (1000 iterations on V100 GPU):
-
-| Constraint | Mode | Accessibility Δ | Constraint Rate | Time |
-|------------|------|-----------------|-----------------|------|
-| Lagrangian | sto_hard | -0.65 kcal/mol | 100% | ~45 min |
-| AMS | sto_soft | -0.85 kcal/mol | 100% | ~40 min |
-| CPC | det_hard | -0.90 kcal/mol | 100% | ~35 min |
-
 ## Citation
 
 If you use this code in your research, please cite:

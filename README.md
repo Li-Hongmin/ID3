@@ -37,11 +37,11 @@ cd id3-framework
 # Install dependencies
 pip install -r requirements.txt
 
-# Run demo - DeepRaccess will be set up automatically on first run
-python demo.py
+# Run case study demo - DeepRaccess will be set up automatically
+bash run_demo.sh
 ```
 
-**That's it!** The first time you run the demo, it will automatically detect that DeepRaccess is missing and offer to set it up for you.
+**That's it!** The first time you run the demo, it will automatically detect that DeepRaccess is missing and set it up for you.
 
 **Manual Setup**:
 ```bash
@@ -53,7 +53,7 @@ cd id3-framework
 pip install -r requirements.txt
 
 # Option 1: Automatic DeepRaccess setup
-bash setup_deepraccess.sh
+bash scripts/setup_deepraccess.sh
 
 # Option 2: Manual DeepRaccess setup
 git clone https://github.com/hmdlab/DeepRaccess.git
@@ -64,23 +64,25 @@ export DEEPRACCESS_PATH=$(pwd)/DeepRaccess
 
 ## Quick Start
 
-### Simple Demo
+### One-Click Case Study Demo
 
 ```bash
-# Interactive demo (default: 20 iterations)
-python demo.py
+# Default: O15263 protein, 200 iterations
+bash run_demo.sh
 
-# From FASTA file with more iterations
-python demo.py --protein-file data/proteins/P04637.fasta --iterations 100
+# Custom protein and iterations
+bash run_demo.sh O15263 200      # Protein ID, iterations
+bash run_demo.sh P04637 500      # Different protein
 
-# Try different constraint mechanisms
-python demo.py --constraint lagrangian --iterations 50       # Default, recommended
-python demo.py --constraint amino_matching --iterations 50   # Softmax-based matching
-python demo.py --constraint codon_profile --iterations 50    # Profile preservation
-
-# Save optimized sequence
-python demo.py --protein MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG --output result.fasta
+# Results saved to examples/demo_<timestamp>/
+# Includes: optimized sequence, trajectory data, and visualizations
 ```
+
+The demo automatically:
+- ✅ Checks and installs DeepRaccess if needed
+- ✅ Runs mRNA optimization with AMS constraint
+- ✅ Generates publication-quality evolution figures
+- ✅ Saves all results to `examples/` directory
 
 ### Production Experiments
 
@@ -111,14 +113,17 @@ Results saved to `results/` directory with detailed metrics and trajectories.
 
 ### What Each Tool Does
 
-**`demo.py`** - Interactive demonstration
-- ✅ Single protein optimization
-- ✅ Visual progress feedback
-- ✅ Good for testing and learning
+**`run_demo.sh`** - Quick case study demo
+- ✅ One-click complete workflow
+- ✅ Automatic DeepRaccess setup
+- ✅ Single protein optimization with visualization
+- ✅ Results saved to `examples/` directory
+- ✅ Perfect for quick demonstrations
 
-**`run_unified_experiment.py`** - Systematic experiments
+**`run_unified_experiment.py`** - Research-grade experiments
 - ✅ Batch experiments (multiple proteins/constraints/variants)
 - ✅ Multiple random seeds for statistical analysis
+- ✅ 12 optimization variants (3 constraints × 4 modes)
 - ✅ Detailed result tracking and analysis
 - ✅ Used for paper results
 
@@ -132,50 +137,62 @@ Both tools optimize:
 Run complete optimization with automatic visualization:
 
 ```bash
-# Quick case study (20 iterations)
-bash run_case_study.sh MSKGEELFT lagrangian 20
+# Quick demo (default: O15263, 200 iterations)
+bash run_demo.sh
 
-# Full case study (100 iterations)
-bash run_case_study.sh MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG lagrangian 100
+# Custom protein and iterations
+bash run_demo.sh P04637 300
 
-# Try different constraints
-bash run_case_study.sh MSKGEELFT amino_matching 50
-bash run_case_study.sh MSKGEELFT codon_profile 50
+# Results automatically saved to timestamped directory
+# Example: examples/demo_20250130_143052/
 ```
 
-Outputs:
-- `case_study_results/optimized_sequence.fasta` - Optimized mRNA
-- `case_study_results/optimization_result.json` - Detailed data
-- `case_study_results/*_convergence.png` - Convergence curves
-- `case_study_results/*_sequence.png` - Sequence analysis
+Outputs in `examples/demo_<timestamp>/`:
+- `optimized_sequence.fasta` - Optimized mRNA sequence
+- `optimization_result.json` - Complete optimization trajectory
+- `*_ams_figure.png` - 3-panel evolution visualization (PNG)
+- `*_ams_figure.pdf` - 3-panel evolution visualization (PDF, vector)
+- `README.md` - Case study documentation
+
+All files can be committed to git for reproducibility.
 
 ### Help
 ```bash
-python demo.py --help                      # Interactive demo options
-python run_unified_experiment.py --help    # Batch experiment options
-python evolution_figure.py --help          # Visualization options
+python run_unified_experiment.py --help    # Research experiment options
+python scripts/demo_case_study.py --help   # Case study script options
+python scripts/evolution_figure.py --help  # Visualization options
 ```
 
 ## Repository Structure
 
 ```
 id3-framework/
-├── demo.py                      # CLI demo script
+├── run_demo.sh                  # One-click case study demo
+├── run_unified_experiment.py    # Research experiment framework
 ├── README.md                    # This file
 ├── LICENSE                      # CC BY-NC-SA 4.0 license
 ├── CITATION.cff                # Citation information
 ├── requirements.txt             # Python dependencies
 │
-├── id3/                        # Source code (49 files)
+├── scripts/                     # Auxiliary scripts
+│   ├── demo_case_study.py      # Case study optimization script
+│   ├── evolution_figure.py     # Visualization generator
+│   ├── setup_deepraccess.sh    # DeepRaccess installer
+│   └── README.md               # Scripts documentation
+│
+├── id3/                        # Source code (60 files)
 │   ├── constraints/            # Constraint mechanisms (12 files)
 │   ├── optimizers/             # Optimization engines (10 files)
 │   ├── cai/                    # CAI module (9 files)
 │   └── utils/                  # Utility functions (18 files)
 │
-└── data/                        # Data files
-    ├── proteins/               # Test protein sequences (12 files)
-    ├── codon_references/       # CAI reference data (15 files)
-    └── utr_templates/          # UTR templates (3 files)
+├── data/                        # Data files
+│   ├── proteins/               # Test protein sequences (12 files)
+│   ├── codon_references/       # CAI reference data (15 files)
+│   └── utr_templates/          # UTR templates (3 files)
+│
+└── examples/                    # Case study results (committed to git)
+    └── O15263_ams_1000iter/    # Example optimization results
 ```
 
 ## Usage
@@ -183,26 +200,23 @@ id3-framework/
 ### Command Line (Recommended)
 
 ```bash
-# Basic usage
-python demo.py
+# Quick demo (one-click)
+bash run_demo.sh
 
-# With CAI optimization
-python demo.py --enable-cai
+# Custom protein and iterations
+bash run_demo.sh O15263 200
+bash run_demo.sh P04637 500
 
-# From FASTA file
-python demo.py --protein-file data/proteins/P04637.fasta --enable-cai
+# For advanced usage, use the Python scripts directly:
+python scripts/demo_case_study.py \
+    --protein O15263 \
+    --iterations 200 \
+    --output examples/my_case_study \
+    --device cpu
 
-# Custom parameters
-python demo.py --protein MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG \
-               --constraint lagrangian \
-               --enable-cai \
-               --cai-target 0.9 \
-               --iterations 10
-
-# Save output
-python demo.py --protein-file data/proteins/P0DTC9.fasta \
-               --enable-cai \
-               --output optimized.fasta
+# Research-grade experiments
+python run_unified_experiment.py --preset quick-test
+python run_unified_experiment.py --preset full-12x12
 ```
 
 ### Python API

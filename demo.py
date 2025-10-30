@@ -255,9 +255,12 @@ def run_accessibility_optimization(args):
 
         # Track trajectory data for visualization
         history['iterations'].append(iteration)
-        # Save rna_probs as numpy list for nucleotide evolution heatmaps
-        rna_probs_np = rna_probs.squeeze(0).detach().cpu().numpy().tolist()
-        history['rna_sequences'].append(rna_probs_np)
+        # Use forward(alpha=1.0, beta=0) for visualization (variant '10' format)
+        # This produces sharper probabilities for brighter visualization colors
+        vis_result = constraint.forward(alpha=1.0, beta=0.0)
+        vis_rna_probs = vis_result['rna_sequence']
+        vis_rna_probs_np = vis_rna_probs.squeeze(0).detach().cpu().numpy().tolist()
+        history['rna_sequences'].append(vis_rna_probs_np)
         # Save discrete sequence for AU content analysis
         history['discrete_sequences'].append(discrete_seq)
 

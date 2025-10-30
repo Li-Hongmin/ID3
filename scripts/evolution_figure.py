@@ -336,10 +336,10 @@ def generate_visualization(json_file, output_file=None):
     ax_bottom.grid(True, alpha=0.3)
     ax_bottom.legend(loc='upper center', fontsize=9)
 
-    # Overall figure title
-    constraint_name = data['constraint_type'].replace('_', ' ').title()
-    fig.suptitle(f'{data["protein_name"]} - {constraint_name} Constraint Optimization Analysis',
-                fontsize=14, fontweight='bold', y=0.95)
+    # Overall figure title (removed for cleaner appearance)
+    # constraint_name = data['constraint_type'].replace('_', ' ').title()
+    # fig.suptitle(f'{data["protein_name"]} - {constraint_name} Constraint Optimization Analysis',
+    #             fontsize=14, fontweight='bold', y=0.95)
 
     plt.tight_layout()
 

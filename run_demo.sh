@@ -66,9 +66,8 @@ fi
 python "$SCRIPT_DIR/demo.py" \
     $PROTEIN_ARG \
     --constraint amino_matching \
+    --mode sto.soft \
     --iterations "$ITERATIONS" \
-    --alpha 0.5 \
-    --beta 0.0 \
     --output "$OUTPUT_DIR/optimized_sequence.fasta" \
     --save-result "$OUTPUT_DIR/optimization_result.json"
 
@@ -95,10 +94,9 @@ Generated: $(date)
 ## Configuration
 - Protein: $PROTEIN
 - Constraint: Amino Acid Matching (AMS)
+- Mode: sto.soft (Stochastic, Soft output)
 - Iterations: $ITERATIONS
 - Device: CPU
-- Alpha: 0.5 (soft probabilities)
-- Beta: 0.0 (deterministic)
 
 ## Files
 - \`optimized_sequence.fasta\` - Optimized mRNA sequence

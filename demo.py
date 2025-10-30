@@ -21,6 +21,14 @@ import torch
 import os
 from tqdm import tqdm
 
+# ID3 Operational Modes (Table 1 from paper)
+MODE_CONFIG = {
+    'det.soft': {'alpha': 0, 'beta': 0},   # Deterministic, Soft output
+    'det.hard': {'alpha': 0, 'beta': 1},   # Deterministic, Hard output
+    'sto.soft': {'alpha': 1, 'beta': 0},   # Stochastic, Soft output
+    'sto.hard': {'alpha': 1, 'beta': 1},   # Stochastic, Hard output
+}
+
 # Check DeepRaccess availability
 project_root = Path(__file__).parent
 deepraccess_dir = project_root / "DeepRaccess"
@@ -136,10 +144,16 @@ def run_accessibility_optimization(args):
     # Calculate ATG position (start of CDS after 5' UTR)
     atg_position = len(utr5)
 
+    # Convert mode to alpha/beta parameters
+    mode_params = MODE_CONFIG[args.mode]
+    alpha = mode_params['alpha']
+    beta = mode_params['beta']
+
     print("\n" + "-"*70)
     print("Configuration")
     print("-"*70)
     print(f"Constraint type: {args.constraint}")
+    print(f"Operational mode: {args.mode} (alpha={alpha}, beta={beta})")
     print(f"CAI target: {args.cai_target}")
     print(f"CAI weight: {args.cai_weight}")
     print(f"Iterations: {args.iterations}")
@@ -213,8 +227,8 @@ def run_accessibility_optimization(args):
 
         # Forward pass through constraint
         result = constraint.forward(
-            alpha=args.alpha,
-            beta=0.0  # Use soft for gradient flow
+            alpha=alpha,
+            beta=beta
         )
 
         rna_probs = result['rna_sequence']
@@ -347,15 +361,15 @@ def run_accessibility_optimization(args):
             'protein_name': protein_seq[:20] if len(protein_seq) > 20 else protein_seq,
             'protein_length': len(protein_seq),
             'constraint_type': args.constraint,
-            'variant': f"{int(args.alpha > 0)}{int(args.beta > 0)}",
+            'mode': args.mode,
+            'variant': f"{alpha}{beta}",  # e.g., "10" for sto.soft
             'seed': 42,  # Default seed
             'configuration': {
+                'mode': args.mode,
                 'iterations': args.iterations,
                 'learning_rate': args.learning_rate,
                 'cai_target': args.cai_target,
                 'cai_weight': args.cai_weight,
-                'alpha': args.alpha,
-                'beta': args.beta,
                 'device': str(args.device)
             },
             'final_accessibility': final_accessibility,
@@ -462,17 +476,11 @@ Note: First run will prompt to auto-install DeepRaccess if not found
     )
 
     parser.add_argument(
-        '--alpha',
-        type=float,
-        default=0.0,
-        help='Stochasticity parameter (0=deterministic, 1=full stochastic)'
-    )
-
-    parser.add_argument(
-        '--beta',
-        type=float,
-        default=1.0,
-        help='Output type (0=soft, 1=hard)'
+        '--mode',
+        type=str,
+        choices=['det.soft', 'det.hard', 'sto.soft', 'sto.hard'],
+        default='sto.soft',
+        help='Operational mode (default: sto.soft) - See Table 1 in paper'
     )
 
     parser.add_argument(

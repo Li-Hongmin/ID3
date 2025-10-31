@@ -3,7 +3,9 @@
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
-Research code for the paper: **"Gradient-based Optimization for mRNA Sequence Design with ID3 Framework"**
+Research code for the paper: **"Gradient-based Optimization for mRNA Sequence Design"**
+
+**Publication**: Li Hongmin, Goro Terai, Takumi Otagaki, Kiyoshi Asai. *bioRxiv* 2025.10.22.683691; doi: https://doi.org/10.1101/2025.10.22.683691
 
 ## Overview
 
@@ -144,7 +146,7 @@ bash run_demo.sh
 bash run_demo.sh P04637 300
 
 # Results automatically saved to timestamped directory
-# Example: examples/demo_20250130_143052/
+# Example: examples/demo_20251031_132621/
 ```
 
 Outputs in `examples/demo_<timestamp>/`:
@@ -320,15 +322,15 @@ python demo.py --constraint codon_profile
 If you use this code in your research, please cite:
 
 ```bibtex
-@article{li2025id3,
-  title={Gradient-based Optimization for mRNA Sequence Design with ID3 Framework},
+@article{li2025gradient,
+  title={Gradient-based Optimization for mRNA Sequence Design},
   author={Li, Hongmin and Terai, Goro and Otagaki, Takumi and Asai, Kiyoshi},
+  journal={bioRxiv},
   year={2025},
-  note={In preparation}
+  doi={10.1101/2025.10.22.683691},
+  url={https://doi.org/10.1101/2025.10.22.683691}
 }
 ```
-
-*Note: DOI and journal information will be updated upon publication.*
 
 ## License
 

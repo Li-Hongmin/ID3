@@ -28,15 +28,15 @@ The licensor cannot revoke these freedoms as long as you follow the license term
 Any academic publication, thesis, or presentation using this software must cite the original paper:
 
 ```bibtex
-@article{li2025id3,
-  title={Gradient-based Optimization for mRNA Sequence Design with ID3 Framework},
+@article{li2025gradient,
+  title={Gradient-based Optimization for mRNA Sequence Design},
   author={Li, Hongmin and Terai, Goro and Otagaki, Takumi and Asai, Kiyoshi},
+  journal={bioRxiv},
   year={2025},
-  note={In preparation}
+  doi={10.1101/2025.10.22.683691},
+  url={https://doi.org/10.1101/2025.10.22.683691}
 }
 ```
-
-*Note: DOI and journal information will be updated upon publication.*
 
 ## Commercial Licensing
 

@@ -269,9 +269,9 @@ def run_accessibility_optimization(args):
 
         # Track trajectory data for visualization
         history['iterations'].append(iteration)
-        # Use forward(alpha=1.0, beta=0) for visualization (variant '10' format)
-        # This produces sharper probabilities for brighter visualization colors
-        vis_result = constraint.forward(alpha=1.0, beta=0.0)
+        # Use forward(alpha=0.0, beta=0) for deterministic visualization
+        # This shows the actual theta parameters without random noise
+        vis_result = constraint.forward(alpha=0.0, beta=0.0)
         vis_rna_probs = vis_result['rna_sequence']
         vis_rna_probs_np = vis_rna_probs.squeeze(0).detach().cpu().numpy().tolist()
         history['rna_sequences'].append(vis_rna_probs_np)

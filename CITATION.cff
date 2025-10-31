@@ -43,7 +43,7 @@ version: 1.0.0
 date-released: 2025-01-15
 preferred-citation:
   type: article
-  title: "Gradient-based Optimization for mRNA Sequence Design with ID3 Framework"
+  title: "Gradient-based Optimization for mRNA Sequence Design"
   authors:
     - family-names: Li
       given-names: Hongmin
@@ -54,4 +54,5 @@ preferred-citation:
     - family-names: Asai
       given-names: Kiyoshi
   year: 2025
-  status: in-preparation
+  journal: bioRxiv
+  doi: 10.1101/2025.10.22.683691

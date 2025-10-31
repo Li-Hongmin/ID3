@@ -15,9 +15,17 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
+# Parse arguments for non-interactive mode
+NON_INTERACTIVE=false
+if [[ "$1" == "-y" || "$1" == "--yes" ]]; then
+    NON_INTERACTIVE=true
+fi
+
 # Get the directory where this script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DEEPRACCESS_DIR="$SCRIPT_DIR/DeepRaccess"
+# Install DeepRaccess to project root (parent of scripts directory)
+PROJECT_ROOT="$SCRIPT_DIR/.."
+DEEPRACCESS_DIR="$PROJECT_ROOT/DeepRaccess"
 
 # Function to print colored messages
 print_info() {
@@ -35,15 +43,26 @@ print_error() {
 # Check if DeepRaccess already exists
 if [ -d "$DEEPRACCESS_DIR" ]; then
     print_warning "DeepRaccess directory already exists at: $DEEPRACCESS_DIR"
-    read -p "Do you want to remove and re-install? (y/N): " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        print_info "Removing existing DeepRaccess directory..."
-        rm -rf "$DEEPRACCESS_DIR"
-    else
-        print_info "Keeping existing DeepRaccess installation."
-        print_info "Verifying installation..."
 
+    if [ "$NON_INTERACTIVE" = true ]; then
+        # Non-interactive mode: verify and exit
+        print_info "Non-interactive mode: Keeping existing installation"
+        print_info "Verifying installation..."
+    else
+        # Interactive mode: ask user
+        read -p "Do you want to remove and re-install? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            print_info "Removing existing DeepRaccess directory..."
+            rm -rf "$DEEPRACCESS_DIR"
+        else
+            print_info "Keeping existing DeepRaccess installation."
+            print_info "Verifying installation..."
+        fi
+    fi
+
+    # Only verify if directory still exists (not removed)
+    if [ -d "$DEEPRACCESS_DIR" ]; then
         # Verify key files exist
         if [ -f "$DEEPRACCESS_DIR/mymodel.py" ]; then
             print_info "✓ DeepRaccess model file found"

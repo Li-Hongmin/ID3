@@ -17,7 +17,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Configuration
 PROTEIN="${1:-O15263}"           # Default: O15263 protein (MeCP2)
-ITERATIONS="${2:-200}"           # Default: 200 iterations
+ITERATIONS="${2:-1000}"          # Default: 1000 iterations
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 OUTPUT_DIR="$SCRIPT_DIR/examples/demo_$TIMESTAMP"
 
@@ -40,7 +40,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 if [ ! -d "$SCRIPT_DIR/DeepRaccess" ]; then
     echo -e "${YELLOW}⚠️  DeepRaccess not found. Installing automatically...${NC}"
     echo ""
-    bash "$SCRIPT_DIR/scripts/setup_deepraccess.sh"
+    # Run setup in non-interactive mode with -y flag
+    bash "$SCRIPT_DIR/scripts/setup_deepraccess.sh" -y
     echo ""
 else
     echo -e "${GREEN}✓ DeepRaccess found${NC}"

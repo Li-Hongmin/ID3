@@ -70,15 +70,22 @@ class DeepRaccessID3Wrapper(nn.Module):
         if deepraccess_model_path is None:
             # Try common locations for the model file
             possible_paths = [
+                # Primary location: project root
                 os.path.join(os.path.dirname(__file__), '../../DeepRaccess/path/FCN_structured.pth'),
                 'DeepRaccess/path/FCN_structured.pth',
+                # Fallback location: scripts directory
+                os.path.join(os.path.dirname(__file__), '../../scripts/DeepRaccess/path/FCN_structured.pth'),
+                'scripts/DeepRaccess/path/FCN_structured.pth',
+                # Alternative model: FCN_uniform
                 os.path.join(os.path.dirname(__file__), '../../DeepRaccess/path/FCN_uniform.pth'),
                 'DeepRaccess/path/FCN_uniform.pth',
+                os.path.join(os.path.dirname(__file__), '../../scripts/DeepRaccess/path/FCN_uniform.pth'),
+                'scripts/DeepRaccess/path/FCN_uniform.pth',
             ]
             for path in possible_paths:
                 if os.path.exists(path):
                     deepraccess_model_path = path
-                    print(f"🔍 Auto-detected model file: {path}")
+                    print(f"🔍 Auto-detected model file: {os.path.abspath(path)}")
                     break
         
         if deepraccess_model_path and os.path.exists(deepraccess_model_path):
@@ -104,6 +111,7 @@ class DeepRaccessID3Wrapper(nn.Module):
             print("✅ DeepRaccess model loaded successfully")
         else:
             print("⚠️  Pretrained model not found, using random initialization")
+            print("   Note: For better results, run: bash scripts/setup_deepraccess.sh")
             
         self.deepraccess_model.eval().to(self.device)
         

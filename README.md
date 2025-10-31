@@ -69,11 +69,11 @@ export DEEPRACCESS_PATH=$(pwd)/DeepRaccess
 ### One-Click Case Study Demo
 
 ```bash
-# Default: O15263 protein, 200 iterations
+# Default: O15263 protein, 1000 iterations
 bash run_demo.sh
 
 # Custom protein and iterations
-bash run_demo.sh O15263 200      # Protein ID, iterations
+bash run_demo.sh O15263 1000     # Protein ID, iterations
 bash run_demo.sh P04637 500      # Different protein
 
 # Results saved to examples/demo_<timestamp>/
@@ -139,7 +139,7 @@ Both tools optimize:
 Run complete optimization with automatic visualization:
 
 ```bash
-# Quick demo (default: O15263, 200 iterations)
+# Quick demo (default: O15263, 1000 iterations)
 bash run_demo.sh
 
 # Custom protein and iterations
@@ -298,7 +298,7 @@ python demo.py --protein MSKGEELFTGVVPILVELDGDVNGHKFSVSGEG --enable-cai
 
 ### Example 3: From File with Custom Parameters
 ```bash
-python demo.py --protein-file data/proteins/P04637.fasta \
+python demo.py --protein-file data/proteins/P04637.fasta.txt \
                --enable-cai \
                --cai-target 0.9 \
                --cai-lambda 0.2 \

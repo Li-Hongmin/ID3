@@ -31,36 +31,50 @@ MODE_CONFIG = {
 
 # Check DeepRaccess availability
 project_root = Path(__file__).parent
-deepraccess_dir = project_root / "DeepRaccess"
+# Check multiple possible locations for DeepRaccess
+possible_deepraccess_dirs = [
+    project_root / "DeepRaccess",           # Primary: project root
+    project_root / "scripts" / "DeepRaccess"  # Fallback: scripts directory
+]
 
-if not deepraccess_dir.exists():
+deepraccess_dir = None
+for dir_path in possible_deepraccess_dirs:
+    if dir_path.exists():
+        deepraccess_dir = dir_path
+        break
+
+if deepraccess_dir is None:
     print("\n" + "="*70)
     print("⚠️  DeepRaccess Not Found")
     print("="*70)
     print("\nDeepRaccess is required for RNA accessibility prediction.")
-    print("\nAutomatic setup:")
-    print("  bash setup_deepraccess.sh")
-    print("\nManual setup:")
-    print("  git clone https://github.com/hmdlab/DeepRaccess.git")
-    print("\nThis will take ~30 seconds with internet connection.")
+    print("\nAttempting automatic setup...")
+    print("This will take ~30 seconds with internet connection.")
     print("="*70 + "\n")
 
-    try:
-        response = input("Would you like to run setup now? (Y/n): ").strip().lower()
-        if response in ['', 'y', 'yes']:
-            import subprocess
-            setup_script = project_root / "setup_deepraccess.sh"
-            if setup_script.exists():
-                subprocess.run([str(setup_script)], check=True)
-                print("\n✅ Setup complete! Please re-run demo.py\n")
-            else:
-                print("\n❌ setup_deepraccess.sh not found")
-        else:
-            print("\n⚠️  Setup skipped. Please set up DeepRaccess manually.\n")
-    except:
-        print("\n⚠️  Setup cancelled.\n")
-
-    sys.exit(1)
+    # Automatically run setup script in non-interactive mode
+    import subprocess
+    setup_script = project_root / "scripts" / "setup_deepraccess.sh"
+    if setup_script.exists():
+        try:
+            # Run setup with -y flag for non-interactive mode
+            result = subprocess.run(
+                ["bash", str(setup_script), "-y"],
+                check=True,
+                capture_output=False
+            )
+            print("\n✅ Setup complete! Please re-run demo.py\n")
+            sys.exit(0)
+        except subprocess.CalledProcessError as e:
+            print(f"\n❌ Setup failed with error code {e.returncode}")
+            print("Please try manual setup:")
+            print("  bash scripts/setup_deepraccess.sh")
+            sys.exit(1)
+    else:
+        print("\n❌ setup_deepraccess.sh not found at scripts/setup_deepraccess.sh")
+        print("\nManual setup:")
+        print("  git clone https://github.com/hmdlab/DeepRaccess.git")
+        sys.exit(1)
 
 from id3.constraints.lagrangian import LagrangianConstraint
 from id3.constraints.amino_matching import AminoMatchingSoftmax

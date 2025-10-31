@@ -13,7 +13,7 @@ This repository contains the complete implementation of the ID3 (Iterative Deep 
 ### Key Features
 
 - **12 Optimization Variants**: 3 constraint mechanisms × 4 optimization modes
-  - **Constraints**: Codon Profile Constraint (CPC), Amino Matching Softmax (AMS), Lagrangian Multiplier
+  - **Constraints**: Codon Profile Constraint, Amino Matching Softmax, Lagrangian Multiplier
   - **Modes**: Deterministic/Stochastic × Soft/Hard
 - **DeepRaccess Integration**: RNA accessibility prediction for ribosome binding
 - **CAI Optimization**: Codon Adaptation Index for translation efficiency
@@ -60,7 +60,7 @@ bash run_demo.sh P04637
 
 The demo automatically:
 - ✅ Checks and installs DeepRaccess if needed
-- ✅ Runs 1000-iteration mRNA optimization with AMS constraint
+- ✅ Runs 1000-iteration mRNA optimization with Amino Matching Softmax constraint
 - ✅ Generates publication-quality evolution figures
 - ✅ Saves all results to `examples/` directory
 
@@ -108,7 +108,7 @@ Results saved to `results/` directory with detailed metrics and trajectories.
 - ✅ Used for paper results
 
 Both tools optimize:
-- **Amino acid constraints** (3 mechanisms: Lagrangian, AMS, CPC)
+- **Amino acid constraints** (3 mechanisms: Lagrangian, Amino Matching Softmax, Codon Profile Constraint)
 - **CAI optimization** (Codon Adaptation Index)
 - **RNA accessibility** (DeepRaccess prediction)
 
@@ -129,7 +129,7 @@ ID3/
 │   └── README.md               # Scripts documentation
 │
 ├── id3/                        # Source code
-│   ├── constraints/            # Constraint mechanisms (AMS, CPC, Lagrangian)
+│   ├── constraints/            # Constraint mechanisms
 │   ├── optimizers/             # Optimization engines
 │   ├── cai/                    # CAI module
 │   └── utils/                  # Utility functions
@@ -200,12 +200,12 @@ The ID3 framework provides 3 constraint mechanisms to ensure RNA sequences encod
 - **Advantages**: Flexible penalty adjustment, stable optimization
 - **Usage**: `demo.py --constraint lagrangian` (default)
 
-### 2. Amino Matching Softmax (AMS)
+### 2. Amino Matching Softmax
 - **Method**: Softmax-based amino acid probability matching
 - **Advantages**: Differentiable, enforces constraints naturally
 - **Usage**: `demo.py --constraint amino_matching` or `run_demo.sh` (default)
 
-### 3. Codon Profile Constraint (CPC)
+### 3. Codon Profile Constraint
 - **Method**: Maintains codon usage distribution from initial sequence
 - **Advantages**: Preserves codon usage patterns
 - **Usage**: `demo.py --constraint codon_profile`

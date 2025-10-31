@@ -17,7 +17,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Configuration
 PROTEIN="${1:-O15263}"           # Default: O15263 protein (MeCP2)
-ITERATIONS="${2:-1000}"          # Default: 1000 iterations
+ITERATIONS=1000                  # Fixed: 1000 iterations
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 OUTPUT_DIR="$SCRIPT_DIR/examples/demo_$TIMESTAMP"
 

@@ -48,12 +48,11 @@ bash run_demo.sh
 ### One-Click Case Study Demo
 
 ```bash
-# Default: O15263 protein, 1000 iterations
+# Default: O15263 protein
 bash run_demo.sh
 
-# Custom protein and iterations
-bash run_demo.sh O15263 1000     # Protein ID, iterations
-bash run_demo.sh P04637 500      # Different protein
+# Different protein
+bash run_demo.sh P04637
 
 # Results saved to examples/demo_<timestamp>/
 # Includes: optimized sequence, trajectory data, and visualizations
@@ -61,7 +60,7 @@ bash run_demo.sh P04637 500      # Different protein
 
 The demo automatically:
 - ✅ Checks and installs DeepRaccess if needed
-- ✅ Runs mRNA optimization with AMS constraint
+- ✅ Runs 1000-iteration mRNA optimization with AMS constraint
 - ✅ Generates publication-quality evolution figures
 - ✅ Saves all results to `examples/` directory
 
@@ -149,14 +148,13 @@ ID3/
 ### Command Line (Recommended)
 
 ```bash
-# Quick demo (default: 1000 iterations)
+# Quick demo (1000 iterations)
 bash run_demo.sh
 
-# Custom protein and iterations
-bash run_demo.sh O15263 1000
-bash run_demo.sh P04637 500
+# Different protein
+bash run_demo.sh P04637
 
-# Research-grade experiments
+# Research-grade experiments (customizable iterations)
 python run_unified_experiment.py --preset quick-test
 python run_unified_experiment.py --preset full-12x12
 ```

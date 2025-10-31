@@ -26,43 +26,23 @@ This repository contains the complete implementation of the ID3 (Iterative Deep 
 
 - Python 3.8 or higher
 - PyTorch 1.9 or higher
-- CUDA-compatible GPU (recommended)
+- CUDA-compatible GPU (optional, CPU supported)
 
-### Setup
+### Quick Setup
 
-**Quick Start (Recommended)**:
 ```bash
 # Clone repository
-git clone https://github.com/username/id3-framework.git
-cd id3-framework
+git clone https://github.com/Li-Hongmin/ID3.git
+cd ID3
 
 # Install dependencies
 pip install -r requirements.txt
 
-# Run case study demo - DeepRaccess will be set up automatically
+# Run demo - DeepRaccess will be set up automatically
 bash run_demo.sh
 ```
 
-**That's it!** The first time you run the demo, it will automatically detect that DeepRaccess is missing and set it up for you.
-
-**Manual Setup**:
-```bash
-# Clone repository
-git clone https://github.com/username/id3-framework.git
-cd id3-framework
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Option 1: Automatic DeepRaccess setup
-bash scripts/setup_deepraccess.sh
-
-# Option 2: Manual DeepRaccess setup
-git clone https://github.com/hmdlab/DeepRaccess.git
-export DEEPRACCESS_PATH=$(pwd)/DeepRaccess
-```
-
-📖 **For detailed setup instructions, see [SETUP.md](SETUP.md)**
+**That's it!** The demo automatically detects and installs DeepRaccess on first run.
 
 ## Quick Start
 
@@ -134,67 +114,35 @@ Both tools optimize:
 - **CAI optimization** (Codon Adaptation Index)
 - **RNA accessibility** (DeepRaccess prediction)
 
-### Case Study Example
-
-Run complete optimization with automatic visualization:
-
-```bash
-# Quick demo (default: O15263, 1000 iterations)
-bash run_demo.sh
-
-# Custom protein and iterations
-bash run_demo.sh P04637 300
-
-# Results automatically saved to timestamped directory
-# Example: examples/demo_20251031_132621/
-```
-
-Outputs in `examples/demo_<timestamp>/`:
-- `optimized_sequence.fasta` - Optimized mRNA sequence
-- `optimization_result.json` - Complete optimization trajectory
-- `*_ams_figure.png` - 3-panel evolution visualization (PNG)
-- `*_ams_figure.pdf` - 3-panel evolution visualization (PDF, vector)
-- `README.md` - Case study documentation
-
-All files can be committed to git for reproducibility.
-
-### Help
-```bash
-python run_unified_experiment.py --help    # Research experiment options
-python scripts/demo_case_study.py --help   # Case study script options
-python scripts/evolution_figure.py --help  # Visualization options
-```
 
 ## Repository Structure
 
 ```
-id3-framework/
+ID3/
 ├── run_demo.sh                  # One-click case study demo
+├── demo.py                      # Main demo script
 ├── run_unified_experiment.py    # Research experiment framework
 ├── README.md                    # This file
-├── LICENSE                      # CC BY-NC-SA 4.0 license
-├── CITATION.cff                # Citation information
 ├── requirements.txt             # Python dependencies
 │
 ├── scripts/                     # Auxiliary scripts
-│   ├── demo_case_study.py      # Case study optimization script
 │   ├── evolution_figure.py     # Visualization generator
 │   ├── setup_deepraccess.sh    # DeepRaccess installer
 │   └── README.md               # Scripts documentation
 │
-├── id3/                        # Source code (60 files)
-│   ├── constraints/            # Constraint mechanisms (12 files)
-│   ├── optimizers/             # Optimization engines (10 files)
-│   ├── cai/                    # CAI module (9 files)
-│   └── utils/                  # Utility functions (18 files)
+├── id3/                        # Source code
+│   ├── constraints/            # Constraint mechanisms (AMS, CPC, Lagrangian)
+│   ├── optimizers/             # Optimization engines
+│   ├── cai/                    # CAI module
+│   └── utils/                  # Utility functions
 │
 ├── data/                        # Data files
-│   ├── proteins/               # Test protein sequences (12 files)
-│   ├── codon_references/       # CAI reference data (15 files)
-│   └── utr_templates/          # UTR templates (3 files)
+│   ├── proteins/               # Test protein sequences (.fasta.txt)
+│   ├── codon_references/       # CAI reference data
+│   └── utr_templates/          # UTR templates
 │
-└── examples/                    # Case study results (committed to git)
-    └── O15263_ams_1000iter/    # Example optimization results
+└── examples/                    # Demo results (with visualizations)
+    └── demo_20251031_233130/   # Example: 1000-iter optimization
 ```
 
 ## Usage
@@ -202,19 +150,12 @@ id3-framework/
 ### Command Line (Recommended)
 
 ```bash
-# Quick demo (one-click)
+# Quick demo (default: 1000 iterations)
 bash run_demo.sh
 
 # Custom protein and iterations
-bash run_demo.sh O15263 200
+bash run_demo.sh O15263 1000
 bash run_demo.sh P04637 500
-
-# For advanced usage, use the Python scripts directly:
-python scripts/demo_case_study.py \
-    --protein O15263 \
-    --iterations 200 \
-    --output examples/my_case_study \
-    --device cpu
 
 # Research-grade experiments
 python run_unified_experiment.py --preset quick-test
@@ -260,17 +201,17 @@ The ID3 framework provides 3 constraint mechanisms to ensure RNA sequences encod
 - **Method**: Soft penalty-based optimization with adaptive λ
 - **Formula**: `L = f_accessibility + λ·C_amino + λ_CAI·L_CAI`
 - **Advantages**: Flexible penalty adjustment, stable optimization
-- **Used in**: Both `demo.py` (default) and `demo_accessibility.py` (default)
+- **Usage**: `demo.py --constraint lagrangian` (default)
 
 ### 2. Amino Matching Softmax (AMS)
 - **Method**: Softmax-based amino acid probability matching
 - **Advantages**: Differentiable, enforces constraints naturally
-- **Used in**: Both `demo.py` and `demo_accessibility.py` (with `--constraint amino_matching`)
+- **Usage**: `demo.py --constraint amino_matching` or `run_demo.sh` (default)
 
 ### 3. Codon Profile Constraint (CPC)
 - **Method**: Maintains codon usage distribution from initial sequence
 - **Advantages**: Preserves codon usage patterns
-- **Used in**: Both `demo.py` and `demo_accessibility.py` (with `--constraint codon_profile`)
+- **Usage**: `demo.py --constraint codon_profile`
 
 **Key Insight**: All constraint mechanisms output soft probability distributions (`rna_sequence`) that can be used for gradient-based optimization with DeepRaccess. The gradient flows through:
 ```

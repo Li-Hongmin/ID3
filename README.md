@@ -1,7 +1,6 @@
 # ID3 Framework for mRNA Sequence Design
 
 [![License: CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
-[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 
 Research code for the paper: **"Gradient-based Optimization for mRNA Sequence Design"**
 
